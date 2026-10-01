@@ -2,7 +2,6 @@
 
 <div align="center">
 
-![Knox DAW Banner](assets/screenshots/screenshot_001.png)
 
 ### **A Modern, High-Performance, Cross-Platform Digital Audio Workstation (DAW)**
 *Next-generation music production software built with a real-time C++20 DSP engine and GPU-accelerated Avalonia .NET 10 UI.*
