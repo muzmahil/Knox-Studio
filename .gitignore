@@ -1,0 +1,102 @@
+# ====================================================================
+# Knox Studio Git Ignore Configuration
+# ====================================================================
+
+# Build & Compilation Outputs
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+build/
+build-*/
+out/
+dist/
+target/
+x64/
+x86/
+ARM64/
+ARM/
+
+# Visual Studio / MSBuild
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.dbmdl
+*.opendb
+*.VC.db
+*.VC.opendb
+.vs/
+Generated\ Files/
+TestResults/
+_ReSharper*/
+*.DotSettings.user
+
+# .NET & NuGet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+nuget.props
+nuget.targets
+
+# CMake & Native Tooling
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+CMakeDirectoryInformation.cmake
+CTestTestfile.cmake
+Makefile
+*.ninja
+.ninja_*
+compile_commands.json
+
+# C++ Compiler Artifacts
+*.obj
+*.o
+*.lib
+*.a
+*.la
+*.lai
+*.so
+*.so.*
+*.dylib
+*.exp
+*.ilk
+*.pdb
+*.tlog
+*.idb
+*.res
+*.pch
+*.ipch
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# Crash Dumps & Logs
+*.log
+*.dmp
+*.crash
+crash-reports/
+
+# Nota Application Temp & User Projects
+*.nota/
+*.notatmp/
+.local/

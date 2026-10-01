@@ -1,0 +1,30 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Infrastructure layer: P/Invoke (interop), persistence, settings, audio/midi config.
+     Implements the Application ports. Depends on Application + Domain. -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Knox.Application\Knox.Application.csproj" />
+    <ProjectReference Include="..\Knox.Domain\Knox.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- Engine contract types (KnoxNote, KnoxTrackInfo, …) and ports live in the
+       Application namespace; make them ambient so the P/Invoke layer and services
+       reference them by simple name. -->
+  <ItemGroup>
+    <Using Include="Knox.Application" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+    <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
+  </ItemGroup>
+
+</Project>

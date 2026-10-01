@@ -1,0 +1,24 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!--
+  Solution-wide build settings.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Single source of truth for the app version: the VERSION file at the repo
+         root (semver MAJOR.MINOR.PATCH). Bumped only when cutting a release,
+         never edited by hand. Feeds AssemblyVersion/FileVersion/InformationalVersion
+         so the running app can read it back via reflection (see AppInfo). The macOS
+         bundle reads the same file for CFBundleShortVersionString. -->
+    <KnoxVersion>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)VERSION').Trim())</KnoxVersion>
+    <Version>$(KnoxVersion)</Version>
+    <AssemblyVersion>$(KnoxVersion)</AssemblyVersion>
+    <FileVersion>$(KnoxVersion)</FileVersion>
+    <InformationalVersion>$(KnoxVersion)</InformationalVersion>
+    <Product>Knox Studio</Product>
+    <AssemblyTitle>Knox Studio</AssemblyTitle>
+    <Description>Knox Studio - Open-Source Digital Audio Workstation</Description>
+    <Company>Furkan Çentek (rootcf)</Company>
+    <Authors>Furkan Çentek (rootcf)</Authors>
+    <Copyright>© 2026 Furkan Çentek (rootcf). Open-source under GNU AGPLv3.</Copyright>
+  </PropertyGroup>
+</Project>

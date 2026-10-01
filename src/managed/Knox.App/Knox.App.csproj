@@ -1,0 +1,122 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Windows .exe icon (Explorer / taskbar / alt-tab). The WinExe output embeds
+         this .ico as the Win32 icon resource. macOS uses the .icns produced by
+         scripts/bundle-mac.sh for the .app bundle, so we only set this on Windows. -->
+    <ApplicationIcon Condition="$([MSBuild]::IsOSPlatform('Windows')) or $(RuntimeIdentifier.StartsWith('win'))">..\..\..\assets\icons\windows\knox.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.3" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- App icon for the window / taskbar. The macOS .app dock & Finder icon comes
+       from the .icns produced by scripts/bundle-mac.sh out of the same source PNG. -->
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\..\assets\icons\logo.png" Link="Assets/logo.png" />
+    <!-- Windows/Linux window icon (.ico with multiple resolutions). macOS uses the
+         .icns produced by scripts/bundle-mac.sh for the dock/Finder icon. -->
+    <AvaloniaResource Include="..\..\..\assets\icons\windows\knox.ico" Link="Assets/knox.ico" />
+    <AvaloniaResource Include="Assets\splash_plaque.png" />
+    <!-- Ship the changelog inside the app so the "What's New" window can parse the
+         entries for the current version at runtime (avares://Knox.App/Assets/CHANGELOG.md). -->
+    <AvaloniaResource Include="..\..\..\CHANGELOG.md" Link="Assets/CHANGELOG.md" />
+    <AvaloniaResource Include="Assets\Fonts\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Knox.Presentation\Knox.Presentation.csproj" />
+    <ProjectReference Include="..\Knox.Infrastructure\Knox.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- Localization JSON files copied to output directory -->
+  <ItemGroup>
+    <None Update="Locales\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Copy the native engine + scan worker next to the app binary so P/Invoke can
+       find them. Built separately by CMake (see src/native/knox.engine). The right
+       artifact per platform: libknox_engine.dylib / knox-scanworker on macOS,
+       knox_engine.dll / knox-scanworker.exe on Windows, libknox_engine.so /
+       knox-scanworker on Linux. Never copy the wrong OS's binary into a
+       cross-publish. Paths can be overridden in CI via
+       -p:KnoxEngineLib=... / -p:KnoxScanWorker=... -->
+  <PropertyGroup>
+    <KnoxNativeDir Condition="'$(KnoxNativeDir)' == ''">$(MSBuildProjectDirectory)/../../native/knox.engine/build</KnoxNativeDir>
+    <!-- Target OS: an explicit RID wins, otherwise the build host. -->
+    <KnoxTargetWin Condition="$(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Windows')))">true</KnoxTargetWin>
+    <KnoxTargetMac Condition="$(RuntimeIdentifier.StartsWith('osx')) or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('OSX')))">true</KnoxTargetMac>
+    <KnoxTargetLinux Condition="$(RuntimeIdentifier.StartsWith('linux')) or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Linux')))">true</KnoxTargetLinux>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(KnoxTargetMac)' == 'true'">
+    <!-- Honour the legacy -p:KnoxEngineDylib override if callers still pass it. -->
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and '$(KnoxEngineDylib)' != ''">$(KnoxEngineDylib)</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == ''">$(KnoxNativeDir)/libknox_engine.dylib</KnoxEngineLib>
+    <KnoxScanWorker Condition="'$(KnoxScanWorker)' == ''">$(KnoxNativeDir)/knox-scanworker</KnoxScanWorker>
+    <KnoxEngineLibName>libknox_engine.dylib</KnoxEngineLibName>
+    <KnoxScanWorkerName>knox-scanworker</KnoxScanWorkerName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(KnoxTargetWin)' == 'true'">
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and Exists('$(KnoxNativeDir)/Release/knox_engine.dll')">$(KnoxNativeDir)/Release/knox_engine.dll</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and Exists('$(KnoxNativeDir)/Debug/knox_engine.dll')">$(KnoxNativeDir)/Debug/knox_engine.dll</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == ''">$(KnoxNativeDir)/knox_engine.dll</KnoxEngineLib>
+    <KnoxScanWorker Condition="'$(KnoxScanWorker)' == '' and Exists('$(KnoxNativeDir)/Release/knox-scanworker.exe')">$(KnoxNativeDir)/Release/knox-scanworker.exe</KnoxScanWorker>
+    <KnoxScanWorker Condition="'$(KnoxScanWorker)' == '' and Exists('$(KnoxNativeDir)/Debug/knox-scanworker.exe')">$(KnoxNativeDir)/Debug/knox-scanworker.exe</KnoxScanWorker>
+    <KnoxScanWorker Condition="'$(KnoxScanWorker)' == ''">$(KnoxNativeDir)/knox-scanworker.exe</KnoxScanWorker>
+    <KnoxEngineLibName>knox_engine.dll</KnoxEngineLibName>
+    <KnoxScanWorkerName>knox-scanworker.exe</KnoxScanWorkerName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(KnoxTargetLinux)' == 'true'">
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == ''">$(KnoxNativeDir)/libknox_engine.so</KnoxEngineLib>
+    <KnoxScanWorker Condition="'$(KnoxScanWorker)' == ''">$(KnoxNativeDir)/knox-scanworker</KnoxScanWorker>
+    <KnoxEngineLibName>libknox_engine.so</KnoxEngineLibName>
+    <KnoxScanWorkerName>knox-scanworker</KnoxScanWorkerName>
+  </PropertyGroup>
+  <PropertyGroup>
+    <KnoxCopyNative Condition="'$(KnoxTargetMac)' == 'true' or '$(KnoxTargetWin)' == 'true' or '$(KnoxTargetLinux)' == 'true'">true</KnoxCopyNative>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(KnoxCopyNative)' == 'true' and Exists('$(KnoxEngineLib)')">
+    <None Include="$(KnoxEngineLib)">
+      <Link>$(KnoxEngineLibName)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <!-- Out-of-process plugin scanner (M3-1), copied next to the app binary. -->
+  <ItemGroup Condition="'$(KnoxCopyNative)' == 'true' and Exists('$(KnoxScanWorker)')">
+    <None Include="$(KnoxScanWorker)">
+      <Link>$(KnoxScanWorkerName)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Clean and tidy build output: keep Knox Studio.exe, Knox Studio.dll, and knox_engine.dll at root,
+       and organize all secondary dependency assemblies neatly into the lib/ subfolder. -->
+  <Target Name="OrganizeOutput" AfterTargets="Build">
+    <ItemGroup>
+      <_DependencyDlls Include="$(TargetDir)*.dll"
+                       Exclude="$(TargetDir)Knox Studio.dll;$(TargetDir)Knox.App.dll;$(TargetDir)knox_engine.dll;$(TargetDir)libknox_engine.dylib;$(TargetDir)libknox_engine.so" />
+      <_DependencyPdbs Include="$(TargetDir)*.pdb"
+                       Exclude="$(TargetDir)Knox Studio.pdb;$(TargetDir)Knox.App.pdb" />
+    </ItemGroup>
+    <MakeDir Directories="$(TargetDir)lib" Condition="'@(_DependencyDlls)' != ''" />
+    <Copy SourceFiles="@(_DependencyDlls)" DestinationFolder="$(TargetDir)lib" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_DependencyPdbs)" DestinationFolder="$(TargetDir)lib" SkipUnchangedFiles="true" />
+    <Delete Files="@(_DependencyDlls)" />
+    <Delete Files="@(_DependencyPdbs)" />
+  </Target>
+</Project>

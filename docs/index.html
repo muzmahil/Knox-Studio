@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knox Audio Engine & DAW Architecture Manual</title>
+  <style>
+    :root {
+      --bg-page: #ffffff;
+      --bg-sidebar: #f5f5f7;
+      --bg-sidebar-active: #e8e8ed;
+      --bg-card: #ffffff;
+      --bg-card-subtle: #f9f9fb;
+      --bg-code: #1e1e1e;
+      --bg-table-head: #f5f5f7;
+      
+      --text-primary: #1d1d1f;
+      --text-secondary: #515154;
+      --text-tertiary: #86868b;
+      --text-link: #0071e3;
+      --text-link-hover: #0077ed;
+      
+      --border-subtle: #d2d2d7;
+      --border-strong: #86868b;
+      --border-focus: #0071e3;
+      
+      --badge-c: #e8f0fe;
+      --badge-c-text: #1967d2;
+      --badge-cs: #f3e8fd;
+      --badge-cs-text: #7b1fa2;
+      --badge-brass: #fef7e0;
+      --badge-brass-text: #b06000;
+      --badge-green: #e6f4ea;
+      --badge-green-text: #137333;
+      
+      --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, Monaco, monospace;
+
+      --sidebar-width: 340px;
+      --header-height: 54px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-apple);
+      font-size: 15px;
+      line-height: 1.68;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Apple Developer Top Sticky Header */
+    header.apple-header {
+      position: sticky;
+      top: 0;
+      height: var(--header-height);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 1000;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .apple-logo {
+      width: 28px;
+      height: 28px;
+      background: #1d1d1f;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+
+    .header-version {
+      font-size: 11px;
+      background: var(--badge-brass);
+      color: var(--badge-brass-text);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      border: 1px solid rgba(179, 107, 0, 0.2);
+    }
+
+    .header-search {
+      flex: 0 1 420px;
+      position: relative;
+    }
+
+    .header-search input {
+      width: 100%;
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 7px 12px 7px 34px;
+      font-size: 13.5px;
+      font-family: var(--font-apple);
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .header-search input:focus {
+      background: #ffffff;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    }
+
+    .header-search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 13.5px;
+    }
+
+    .header-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .header-links a:hover {
+      color: var(--text-link);
+    }
+
+    /* Main Flex Layout */
+    .main-layout {
+      display: flex;
+      min-height: calc(100vh - var(--header-height));
+    }
+
+    /* Sticky Sidebar Navigation */
+    aside.apple-sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      position: sticky;
+      top: var(--header-height);
+      height: calc(100vh - var(--header-height));
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 20px 0 80px;
+      user-select: none;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      padding: 14px 24px 6px;
+    }
+
+    .sidebar-list {
+      list-style: none;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-item a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 24px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 400;
+      border-left: 3px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .sidebar-item a:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .sidebar-item.active a {
+      background: var(--bg-sidebar-active);
+      color: var(--text-link);
+      font-weight: 600;
+      border-left-color: var(--text-link);
+    }
+
+    /* Content Area */
+    main.apple-content {
+      flex: 1;
+      min-width: 0;
+      padding: 48px 80px 160px;
+      background: var(--bg-page);
+    }
+
+    .doc-section {
+      margin-bottom: 96px;
+      scroll-margin-top: calc(var(--header-height) + 24px);
+    }
+
+    .doc-breadcrumbs {
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    h1.doc-hero-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      line-height: 1.25;
+    }
+
+    p.lead-paragraph {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      max-width: 950px;
+    }
+
+    h2.section-heading {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--text-primary);
+      margin: 44px 0 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 10px;
+    }
+
+    h3.sub-heading {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      color: var(--text-primary);
+      margin: 32px 0 12px;
+    }
+
+    h4.topic-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 20px 0 8px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+
+    ul, ol {
+      margin-left: 24px;
+      margin-bottom: 18px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.65;
+    }
+
+    /* Callout Card */
+    .apple-callout {
+      background: var(--bg-card-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 24px 0 32px;
+      position: relative;
+    }
+
+    .apple-callout.warning {
+      border-left: 4px solid #ff9500;
+      background: #fffdfa;
+    }
+
+    .apple-callout.danger {
+      border-left: 4px solid #ff3b30;
+      background: #fff9f9;
+    }
+
+    .apple-callout.info {
+      border-left: 4px solid var(--text-link);
+      background: #fbfdff;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Tables */
+    .table-box {
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 20px 0 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    table.apple-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    table.apple-table th {
+      background: var(--bg-table-head);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12.5px;
+      letter-spacing: 0.02em;
+    }
+
+    table.apple-table td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+
+    table.apple-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.apple-table tr:hover td {
+      background: #fafafc;
+    }
+
+    /* API Cards */
+    .api-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 24px 0 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .api-signature {
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #004085;
+      margin: 12px 0 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Code Snippets */
+    .apple-code-container {
+      background: var(--bg-code);
+      border-radius: 8px;
+      margin: 18px 0 28px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .apple-code-header {
+      background: #2c2c2e;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #a1a1a6;
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: var(--font-apple);
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    pre {
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #f5f5f7;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: #f2f2f7;
+      border: 1px solid #e5e5ea;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #b36b00;
+    }
+
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+    .badge-c { background: var(--badge-c); color: var(--badge-c-text); }
+    .badge-cs { background: var(--badge-cs); color: var(--badge-cs-text); }
+    .badge-brass { background: var(--badge-brass); color: var(--badge-brass-text); }
+    .badge-green { background: var(--badge-green); color: var(--badge-green-text); }
+
+    /* ASCII / Flow Diagrams */
+    .flow-diagram {
+      background: #f8f9fa;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 18px 24px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: #005bb5;
+      overflow-x: auto;
+      line-height: 1.5;
+      margin: 20px 0 28px;
+    }
+
+    /* Mobile */
+    @media (max-width: 960px) {
+      aside.apple-sidebar {
+        position: fixed;
+        left: -340px;
+        top: var(--header-height);
+        bottom: 0;
+        z-index: 1200;
+        background: #ffffff;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+        transition: left 0.25s ease;
+      }
+      aside.apple-sidebar.open { left: 0; }
+      main.apple-content { padding: 32px 24px 80px; }
+      .mobile-menu-toggle { display: inline-block !important; }
+      .header-search { flex: 0 1 200px; }
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-subtle);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Top Header -->
+  <header class="apple-header">
+    <div class="header-left">
+      <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="apple-logo">K</div>
+      <span class="header-title">Knox Developer Documentation</span>
+      <span class="header-version">v1.0 Production</span>
+    </div>
+
+    <div class="header-search">
+      <span class="header-search-icon">🔍</span>
+      <input type="text" id="global-search" placeholder="Search architecture, DSP, C ABI, or tutorials..." oninput="handleSearch(this.value)" />
+    </div>
+
+    <div class="header-links">
+      <a href="https://github.com/nota-daw/nota" target="_blank">GitHub ↗</a>
+      <a href="#quickstart">Quick Start</a>
+      <a href="#tutorial-new-synth">Create a Synth</a>
+      <a href="#tutorial-new-effect">Create an Effect</a>
+      <a href="#c-abi-reference">C ABI Manual</a>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Sticky Sidebar Navigation -->
+    <aside class="apple-sidebar" id="sidebar">
+      
+      <div class="sidebar-section-title">1. Introduction & Overview</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item active"><a href="#overview">Overview & System Architecture</a></li>
+        <li class="sidebar-item"><a href="#quickstart">Build Matrix & Platform Commands</a></li>
+        <li class="sidebar-item"><a href="#repo-map">Repository Layout & Source Tree</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">2. Audio Engine & Real-Time DSP</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#architecture-rules">AR-1 to AR-9 Real-Time Rules</a></li>
+        <li class="sidebar-item"><a href="#render-loop">Audio Render Loop (Step-by-Step)</a></li>
+        <li class="sidebar-item"><a href="#threading">Lock-Free SPSC Ring Queues & Concurrency</a></li>
+        <li class="sidebar-item"><a href="#audio-graph">Audio Graph & Routing Topology</a></li>
+        <li class="sidebar-item"><a href="#warping">Signalsmith Warp & Time-Stretching</a></li>
+        <li class="sidebar-item"><a href="#modulation">Modular CV Modulation Matrix</a></li>
+        <li class="sidebar-item"><a href="#audio-to-midi">Audio-to-MIDI Analysis Engine</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">3. Developer Tutorials</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#tutorial-new-synth">Tutorial: Creating a Polyphonic Synth</a></li>
+        <li class="sidebar-item"><a href="#tutorial-new-effect">Tutorial: Building an Audio Effect</a></li>
+        <li class="sidebar-item"><a href="#tutorial-new-midi-fx">Tutorial: Building a MIDI Processor Effect</a></li>
+        <li class="sidebar-item"><a href="#tutorial-new-abi">Tutorial: Adding a New C ABI Function</a></li>
+        <li class="sidebar-item"><a href="#tutorial-smoke-test">Tutorial: Writing Automated Smoke Tests</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">4. Managed Architecture (.NET 10)</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#layer-domain">Knox.Domain: Pure Musical Models</a></li>
+        <li class="sidebar-item"><a href="#layer-application">Knox.Application: Ports, Use Cases & DTOs</a></li>
+        <li class="sidebar-item"><a href="#layer-infrastructure">Knox.Infrastructure: P/Invoke & Serialization</a></li>
+        <li class="sidebar-item"><a href="#layer-presentation">Knox.Presentation: Reactive MVVM Architecture</a></li>
+        <li class="sidebar-item"><a href="#layer-app">Knox.App: Avalonia 12 UI Views & Controls</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">5. DSP & Instruments Catalog</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#catalog-synths">Synthesizers & Sound Engines (10 Synths)</a></li>
+        <li class="sidebar-item"><a href="#catalog-effects">Audio Effects Catalog (10 Effects)</a></li>
+        <li class="sidebar-item"><a href="#catalog-racks">Racks: Instrument, Drum & Audio Effect Racks</a></li>
+        <li class="sidebar-item"><a href="#catalog-plugins">VST3 / AU Plugin Hosting & Scanworker</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">6. C ABI Complete Reference</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#abi-lifecycle">1. Engine Lifecycle & Global Diagnostics</a></li>
+        <li class="sidebar-item"><a href="#abi-transport">2. Transport & Playhead Management</a></li>
+        <li class="sidebar-item"><a href="#abi-tracks">3. Track Management & Mixing</a></li>
+        <li class="sidebar-item"><a href="#abi-clips">4. Clip Scheduling & Timeline</a></li>
+        <li class="sidebar-item"><a href="#abi-devices">5. Device & Parameter Manipulation</a></li>
+        <li class="sidebar-item"><a href="#abi-automation">6. Parameter Automation Curves</a></li>
+        <li class="sidebar-item"><a href="#abi-modulation">7. Modular CV Modulation Links</a></li>
+        <li class="sidebar-item"><a href="#abi-session">8. Master Bus, Metering & Offline Bounce</a></li>
+        <li class="sidebar-item"><a href="#abi-racks">9. Multi-Chain Racks & Macro Routing</a></li>
+        <li class="sidebar-item"><a href="#abi-freeze">10. Track Freeze & Resource Management</a></li>
+        <li class="sidebar-item"><a href="#abi-plugins">11. Third-Party Plugin Hosting</a></li>
+      </ul>
+
+      <div class="sidebar-section-title">7. Storage & Persistence</div>
+      <ul class="sidebar-list">
+        <li class="sidebar-item"><a href="#persistence">Project File Bundle Format (.nota)</a></li>
+      </ul>
+
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="apple-content">
+
+      <!-- SECTION 1: Overview & System Architecture -->
+      <section class="doc-section" id="overview">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Introduction &gt; System Overview</div>
+        <h1 class="doc-hero-title">Knox System Architecture &amp; Overview</h1>
+        <p class="lead-paragraph">
+          Knox is a dual-runtime, modern digital audio workstation designed for high-performance audio synthesis, sample manipulation, and reactive UI composition. Its architecture couples a C++20 real-time native engine with a .NET 10 cross-platform user interface via a zero-overhead C Foreign Function Interface (FFI).
+        </p>
+
+        <h2 class="section-heading">High-Level Architectural Topology</h2>
+        <div class="flow-diagram">
++---------------------------------------------------------------------------------------------------+
+|                                      KNOX USER INTERFACE (.NET 10)                                 |
+|                                                                                                   |
+|  [ Knox.App (Avalonia 12) ]  &lt;--- Data Binding ---&gt;  [ Knox.Presentation (MVVM ViewModels) ]     |
+|         |                                                       |                                 |
+|         +-- Custom DrawingContext Controls                      v                                 |
+|             (Waveforms, Piano Roll, Meters)            [ Knox.Application (Ports &amp; DTOs) ]         |
+|                                                                 |                                 |
+|                                                                 v                                 |
+|                                                 [ Knox.Infrastructure (P/Invoke &amp; IO) ]           |
++-----------------------------------------------------------------+---------------------------------+
+                                                                  |  C Foreign Function Interface
+                                                                  |  (Zero Garbage Collection)
++-----------------------------------------------------------------v---------------------------------+
+|                                    KNOX NATIVE CORE (C++20 DLL)                                   |
+|                                                                                                   |
+|  [ SPSC Command Queue ] --- (Lock-Free FIFO) ---&gt; [ Hard Real-Time Audio Render Thread ]          |
+|                                                                 |                                 |
+|             +---------------------------------------------------+--------------------+            |
+|             |                                   |                                    |            |
+|             v                                   v                                    v            |
+|   [ Timeline Engine ]                  [ Instrument Voices ]                [ Audio FX Graph ]    |
+|   - Audio Clips (Signalsmith Warp)     - 10 Built-in Synths                 - 10 Built-in FX      |
+|   - MIDI Clips (Sample-accurate)       - PolyBLEP &amp; FM Engines              - Parallel Racks      |
+|   - Audio-to-MIDI Transcription        - Voice Stealing Manager             - VST3 / AU Host      |
+|             |                                   |                                    |            |
+|             +-----------------------------------+------------------------------------+            |
+|                                                 |                                                 |
+|                                                 v                                                 |
+|                                    [ Master Bus &amp; True Peak Limiter ]                             |
+|                                                 |                                                 |
+|                                                 v                                                 |
+|                              [ miniaudio Hardware Driver (WASAPI/CoreAudio/ALSA) ]                |
++---------------------------------------------------------------------------------------------------+
+        </div>
+
+        <h2 class="section-heading">Architectural Pillars</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Pillar</th>
+                <th>Layer</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Hard Real-Time Core</strong></td>
+                <td>C++20 Native Engine</td>
+                <td>Guarantees deterministic execution bounded by audio buffer deadlines ($&lt;2.9\,	ext{ms}$ at 128 samples). Strictly adheres to AR-1 through AR-9 real-time rules: zero heap allocation, zero locks/mutexes, zero OS syscalls.</td>
+              </tr>
+              <tr>
+                <td><strong>Lock-Free Communication</strong></td>
+                <td>C ABI &amp; Ring Queues</td>
+                <td>The UI thread and audio render thread never block one another. All commands, parameter automation, and playhead movements travel via single-producer single-consumer (SPSC) lock-free ring buffers using acquire-release atomics.</td>
+              </tr>
+              <tr>
+                <td><strong>Reactive Desktop Frontend</strong></td>
+                <td>.NET 10 / Avalonia 12</td>
+                <td>Implements clean architecture across Domain, Application, Infrastructure, and Presentation layers. Renders 60 FPS smooth interactive waveforms, bezier automation curves, and piano roll grids using direct GPU DrawingContext drawing.</td>
+              </tr>
+              <tr>
+                <td><strong>Advanced DSP &amp; Modulation</strong></td>
+                <td>Native DSP Subsystem</td>
+                <td>Equipped with 10 built-in sound generators, 10 dynamic and spatial audio effects, Signalsmith time-stretching with transient preservation, YIN pitch tracking, and a 32-channel modular CV routing matrix.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Build Matrix & Platform Commands -->
+      <section class="doc-section" id="quickstart">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Introduction &gt; Build Matrix</div>
+        <h1 class="doc-hero-title">Build Matrix &amp; Platform Commands</h1>
+        <p class="lead-paragraph">
+          Knox compiles natively on Windows 10/11 (x64/ARM64), macOS 12+ (Apple Silicon/Intel), and Linux (x86_64). Both the native C++ engine and the managed C# UI are built with standardized CLI tools.
+        </p>
+
+        <h2 class="section-heading">Toolchain Prerequisites</h2>
+        <ul>
+          <li><strong>C++ Compiler:</strong> MSVC v143 (Visual Studio 2022), Apple Clang 14+, or GCC 13+ with C++20 support.</li>
+          <li><strong>Build Generator:</strong> CMake 3.25 or newer.</li>
+          <li><strong>Managed Runtime:</strong> .NET 10.0 SDK.</li>
+          <li><strong>Audio Driver Libraries:</strong> WASAPI (Windows built-in), CoreAudio (macOS built-in), or ALSA / libasound2-dev (Linux).</li>
+        </ul>
+
+        <h2 class="section-heading">Platform Build Instructions</h2>
+
+        <h3 class="sub-heading">1. Windows (MSVC &amp; PowerShell)</h3>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>PowerShell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code># 1. Configure and compile native C++ engine
+cmake -B build/native -S src/native -DCMAKE_BUILD_TYPE=Release
+cmake --build build/native --config Release --parallel
+
+# 2. Copy native engine DLL to managed runtime output directory
+Copy-Item build/native/bin/Release/knox_engine.dll src/managed/Knox.App/bin/Release/net10.0/
+
+# 3. Compile and launch the Knox Avalonia application
+dotnet build Knox.sln -c Release
+dotnet run --project src/managed/Knox.App/Knox.App.csproj -c Release</code></pre>
+        </div>
+
+        <h3 class="sub-heading">2. macOS (Apple Silicon &amp; Intel)</h3>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>Bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code># 1. Configure and build native dylib
+cmake -B build/native -S src/native -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+cmake --build build/native --config Release --parallel
+
+# 2. Build managed solution
+dotnet build Knox.sln -c Release
+dotnet run --project src/managed/Knox.App/Knox.App.csproj -c Release</code></pre>
+        </div>
+
+        <h3 class="sub-heading">3. Linux (Ubuntu / Debian / Fedora)</h3>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>Bash</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code># Install ALSA audio headers
+sudo apt-get update && sudo apt-get install -y libasound2-dev cmake g++-13
+
+# Build native shared library
+cmake -B build/native -S src/native -DCMAKE_BUILD_TYPE=Release
+cmake --build build/native --config Release -j$(nproc)
+
+# Run test suite
+dotnet test tests/Knox.SmokeTest/Knox.SmokeTest.csproj -c Release</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Repository Layout & Source Tree -->
+      <section class="doc-section" id="repo-map">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Introduction &gt; Repository Map</div>
+        <h1 class="doc-hero-title">Repository Layout &amp; Source Tree</h1>
+        <p class="lead-paragraph">
+          The Knox repository is organized into distinct functional layers separating real-time native audio processing, domain logic, user presentation, and automated testing.
+        </p>
+
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Directory Path</th>
+                <th>Language / Runtime</th>
+                <th>Responsibilities &amp; Key Subsystems</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>include/nota/</code></td>
+                <td>C / C++ Header</td>
+                <td>Authoritative public C ABI definition (<code>knox_engine.h</code>), error codes, and opaque handle types.</td>
+              </tr>
+              <tr>
+                <td><code>src/native/knox.engine/</code></td>
+                <td>C++20 Native Core</td>
+                <td>The audio engine implementation. Contains the audio render loop, miniaudio backend, voice allocators, and DSP filters.</td>
+              </tr>
+              <tr>
+                <td><code>├── src/dsp/</code></td>
+                <td>C++20</td>
+                <td>Core DSP algorithms: biquad filters, Moog ladder filters, delay lines, FFT, and Signalsmith Warp integration.</td>
+              </tr>
+              <tr>
+                <td><code>├── src/devices/</code></td>
+                <td>C++20</td>
+                <td>All 10 built-in synthesizers (FM, Wavetable, PolySynth) and 10 audio effects (EQ, Delay, Reverb, Compressor).</td>
+              </tr>
+              <tr>
+                <td><code>├── src/racks/</code></td>
+                <td>C++20</td>
+                <td>Instrument Rack, Drum Rack, and Audio Effect Rack implementations with macro knob routing.</td>
+              </tr>
+              <tr>
+                <td><code>├── src/plugins/</code></td>
+                <td>C++20</td>
+                <td>VST3 and AudioUnit plugin hosting manager, parameter mapping, and state chunk serialization.</td>
+              </tr>
+              <tr>
+                <td><code>src/managed/Knox.Domain/</code></td>
+                <td>C# (.NET 10)</td>
+                <td>Pure musical domain models: musical time coordinate <code>Beats</code>, <code>MidiNote</code>, <code>TrackKind</code>, <code>WarpMode</code>. Zero external dependencies.</td>
+              </tr>
+              <tr>
+                <td><code>src/managed/Knox.Application/</code></td>
+                <td>C# (.NET 10)</td>
+                <td>Use cases, service interfaces (<code>IAudioEngine</code>, <code>IProjectService</code>), and immutable Data Transfer Objects (DTOs).</td>
+              </tr>
+              <tr>
+                <td><code>src/managed/Knox.Infrastructure/</code></td>
+                <td>C# (.NET 10)</td>
+                <td>P/Invoke FFI bindings to <code>knox_engine.dll</code>, atomic project saving/loading, and Discord Rich Presence integration.</td>
+              </tr>
+              <tr>
+                <td><code>src/managed/Knox.Presentation/</code></td>
+                <td>C# (.NET 10)</td>
+                <td>MVVM ViewModels (<code>MainViewModel</code>, <code>TrackViewModel</code>, <code>ClipViewModel</code>, <code>ModularViewModel</code>) and 60 FPS polling services.</td>
+              </tr>
+              <tr>
+                <td><code>src/managed/Knox.App/</code></td>
+                <td>C# / Avalonia 12</td>
+                <td>Desktop composition root, XAML windows, arrangement views, clip editors, and over 40 custom GPU controls.</td>
+              </tr>
+              <tr>
+                <td><code>tests/Knox.SmokeTest/</code></td>
+                <td>C# (.NET 10)</td>
+                <td>Headless integration smoke test suite validating offline rendering, instrument polyphony, and ABI integrity.</td>
+              </tr>
+              <tr>
+                <td><code>docs/</code></td>
+                <td>HTML / CSS / JS</td>
+                <td>Production GitHub Pages developer documentation portal.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    
+      <!-- SECTION 4: Architecture Rules (AR-1 to AR-9) -->
+      <section class="doc-section" id="architecture-rules">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Real-Time Rules</div>
+        <h1 class="doc-hero-title">Hard Real-Time Audio Rules (AR-1 to AR-9)</h1>
+        <p class="lead-paragraph">
+          The native Knox audio engine executes inside a hard real-time operating system thread. Missing an audio buffer deadline causes audible dropouts, clicks, or glitches. To guarantee sub-3ms latency without failure, the engine strictly enforces rules AR-1 through AR-9.
+        </p>
+
+        <div class="apple-callout danger">
+          <div class="callout-title">⚠️ Hard Real-Time Constraint</div>
+          Any code path reachable from <code>knox_engine_render()</code> must execute in bounded, deterministic time ($O(1)$ or $O(N)$ with fixed small $N$). Non-deterministic operations violate these rules and will fail code review.
+        </div>
+
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Rule ID</th>
+                <th>Constraint Title</th>
+                <th>Detailed Engineering Requirement</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>AR-1</strong></td>
+                <td>Zero Dynamic Allocation</td>
+                <td>No calls to <code>malloc</code>, <code>calloc</code>, <code>free</code>, <code>new</code>, <code>delete</code>, or resizing STL containers (<code>std::vector::push_back</code>, <code>std::string</code>) on the audio thread. All memory must be pre-allocated during device creation.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-2</strong></td>
+                <td>Zero Blocking &amp; Mutexes</td>
+                <td>No <code>std::mutex</code>, <code>std::condition_variable</code>, or OS locks. Priority inversion can stall the audio thread indefinitely. Use lock-free atomics and SPSC queues.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-3</strong></td>
+                <td>Zero File &amp; Network I/O</td>
+                <td>Never call <code>printf</code>, file read/write, disk logging, or network socket operations from the render loop. File I/O belongs exclusively to background worker threads.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-4</strong></td>
+                <td>Zero C++ Exceptions</td>
+                <td>Throwing or catching exceptions on the audio thread incurs unbounded runtime overhead and stack unwinding. Error codes (<code>NotaResult</code>) are used exclusively.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-5</strong></td>
+                <td>Fixed Scratch Buffers</td>
+                <td>All intermediate DSP processing buffers are pre-allocated to maximum buffer sizes (e.g. 2048 frames) and memory-aligned (32/64 bytes) for SIMD AVX2/NEON vectorization.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-6</strong></td>
+                <td>Cache Locality &amp; SoA</td>
+                <td>Store voice states and sample buffers sequentially in memory (Structure of Arrays) to maximize L1/L2 CPU cache hit rates and eliminate pointer chasing.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-7</strong></td>
+                <td>Denormal Prevention</td>
+                <td>DSP filter loops must enable hardware Flush-to-Zero (FTZ) and Denormals-are-Zero (DAZ) flags to prevent microcode trap slowdowns when IIR decay approaches zero.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-8</strong></td>
+                <td>Lock-Free SPSC Queuing</td>
+                <td>All communication between UI/control threads and the audio thread passes through Single-Producer Single-Consumer lock-free ring buffers using <code>std::memory_order_release</code> and <code>std::memory_order_acquire</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>AR-9</strong></td>
+                <td>Bounded Execution Time</td>
+                <td>Total block processing time must remain comfortably below the hardware buffer duration ($t_{	ext{render}} &lt; 0.7 	imes t_{	ext{deadline}}$) across all CPU loads.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Audio Render Loop -->
+      <section class="doc-section" id="render-loop">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Render Loop</div>
+        <h1 class="doc-hero-title">Hard Real-Time Audio Render Loop</h1>
+        <p class="lead-paragraph">
+          The render loop is invoked synchronously by the underlying audio driver (via miniaudio) whenever hardware output buffers require replenishment. Every iteration processes exactly $N$ audio frames across all active tracks.
+        </p>
+
+        <h2 class="section-heading">Step-by-Step Render Loop Sequence</h2>
+        <div class="flow-diagram">
+Hardware Interrupt (miniaudio callback)
+   |
+   +--&gt; Step 1: Drain SPSC Command Queue (Pointers, parameter automation, seeks)
+   |
+   +--&gt; Step 2: Advance Transport (Calculate song position beats &amp; tempo interpolation)
+   |
+   +--&gt; Step 3: Dispatch MIDI Events (Timeline clips + hardware MIDI input)
+   |
+   +--&gt; Step 4: Evaluate Modulation Matrix (Update 32 LFOs &amp; Envelope Followers)
+   |
+   +--&gt; Step 5: Process Instrument Tracks (Synthesizers generate audio into track buffers)
+   |
+   +--&gt; Step 6: Process Audio Tracks (Signalsmith Warp engine streams time-stretched audio)
+   |
+   +--&gt; Step 7: Execute Device Insert Chains (Filters, dynamic EQs, saturators, plugins)
+   |
+   +--&gt; Step 8: Route &amp; Sum Return / Aux Sends (Reverb, delay, parallel processing)
+   |
+   +--&gt; Step 9: Sum Track Buffers into Master Bus (Apply master gain and panning)
+   |
+   +--&gt; Step 10: Apply Master Bus Lookahead Limiter (Prevent digital clipping &amp; ISP peaks)
+   |
+   +--&gt; Step 11: Push Diagnostic Metrics to SPSC Out-Queue (Peak/RMS meters, voice usage)
+   |
+   +--&gt; Step 12: Zero-Copy Delivery to Hardware Output Buffer (Return control to driver)
+        </div>
+
+        <h2 class="section-heading">Inner Loop Code Walkthrough</h2>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>AudioEngine.cpp (Audio Render Callback)</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>void AudioEngine::renderBlock(float* outL, float* outR, uint32_t numFrames) {
+    // 1. Drain incoming UI commands without locks
+    drainCommandQueue();
+
+    // 2. Transport calculation
+    const double startBeat = m_transport.getPositionBeats();
+    const double endBeat = startBeat + m_transport.samplesToBeats(numFrames);
+
+    // 3. Clear master accumulation buffer
+    std::fill_n(m_masterBufferL.data(), numFrames, 0.0f);
+    std::fill_n(m_masterBufferR.data(), numFrames, 0.0f);
+
+    // 4. Update CV Modulators (32 LFOs, 32 Envelopes)
+    m_modulationMatrix.processBlock(numFrames);
+
+    // 5. Render active tracks
+    for (auto& track : m_tracks) {
+        if (track->isMuted()) continue;
+
+        // Render instruments or audio clips into track scratch buffer
+        track->processBlock(startBeat, endBeat, numFrames);
+
+        // Accumulate into master with track volume and pan
+        track->accumulateTo(m_masterBufferL.data(), m_masterBufferR.data(), numFrames);
+    }
+
+    // 6. Master insert chain & True Peak Limiter
+    m_masterLimiter.process(m_masterBufferL.data(), m_masterBufferR.data(), numFrames);
+
+    // 7. Output delivery
+    std::copy_n(m_masterBufferL.data(), numFrames, outL);
+    std::copy_n(m_masterBufferR.data(), numFrames, outR);
+
+    // 8. Publish atomic meter levels for UI polling
+    m_masterMeterL.store(calculatePeak(outL, numFrames), std::memory_order_relaxed);
+    m_masterMeterR.store(calculatePeak(outR, numFrames), std::memory_order_relaxed);
+
+    m_transport.advanceSamples(numFrames);
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 6: Lock-Free Queues & Concurrency -->
+      <section class="doc-section" id="threading">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Threading &amp; Concurrency</div>
+        <h1 class="doc-hero-title">Lock-Free SPSC Ring Queues &amp; Concurrency</h1>
+        <p class="lead-paragraph">
+          Knox segregates operations across specialized threads to preserve real-time audio safety while delivering a responsive 60 FPS user interface. Thread communication occurs without locks via cache-aligned lock-free ring queues.
+        </p>
+
+        <h2 class="section-heading">System Thread Hierarchy</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Thread Name</th>
+                <th>Priority</th>
+                <th>Core Affinity</th>
+                <th>Permitted Operations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Audio Render Thread</strong></td>
+                <td>Real-Time (Time Critical)</td>
+                <td>Dedicated CPU Core</td>
+                <td>DSP processing, voice rendering, audio mixing. Strictly bounded execution. No allocations, no mutexes.</td>
+              </tr>
+              <tr>
+                <td><strong>UI / Presentation Thread</strong></td>
+                <td>Normal OS Priority</td>
+                <td>UI Event Loop</td>
+                <td>Avalonia 12 visual tree layout, user mouse/keyboard input, 60 FPS viewport rendering, command dispatch.</td>
+              </tr>
+              <tr>
+                <td><strong>Background I/O Worker</strong></td>
+                <td>Low / Background</td>
+                <td>Shared Worker Pool</td>
+                <td>Decoding audio files (WAV, FLAC, MP3), saving project bundles (<code>.nota</code>), offline rendering/bouncing.</td>
+              </tr>
+              <tr>
+                <td><strong>Plugin Scan Worker</strong></td>
+                <td>Isolated Separate Process</td>
+                <td>External Process</td>
+                <td>Instantiates untrusted third-party VST3/AU binaries. Protects main DAW from crashes or memory corruption.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="section-heading">Single-Producer Single-Consumer (SPSC) Ring Queue</h2>
+        <p>
+          To send control events (such as parameter modifications or clip triggers) from the UI thread to the audio thread without locking, Knox implements a templated SPSC ring queue. Atomic head and tail indices are separated onto different 64-byte cache lines to prevent CPU cache false sharing.
+        </p>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>SpscQueue.h (Lock-Free Memory Ordering)</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>template &lt;typename T, size_t Capacity&gt;
+class SpscQueue {
+    static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be a power of two");
+public:
+    bool push(const T& item) {
+        const size_t tail = m_tail.load(std::memory_order_relaxed);
+        const size_t head = m_head.load(std::memory_order_acquire);
+        if ((tail - head) &gt;= Capacity) return false; // Queue is full
+
+        m_buffer[tail & (Capacity - 1)] = item;
+        m_tail.store(tail + 1, std::memory_order_release);
+        return true;
+    }
+
+    bool pop(T& item) {
+        const size_t head = m_head.load(std::memory_order_relaxed);
+        const size_t tail = m_tail.load(std::memory_order_acquire);
+        if (head == tail) return false; // Queue is empty
+
+        item = m_buffer[head & (Capacity - 1)];
+        m_head.store(head + 1, std::memory_order_release);
+        return true;
+    }
+
+private:
+    alignas(64) std::atomic&lt;size_t&gt; m_tail{0};
+    alignas(64) std::atomic&lt;size_t&gt; m_head{0};
+    std::array&lt;T, Capacity&gt; m_buffer;
+};</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 7: Audio Graph & Routing Topology -->
+      <section class="doc-section" id="audio-graph">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Audio Graph</div>
+        <h1 class="doc-hero-title">Audio Graph &amp; Routing Topology</h1>
+        <p class="lead-paragraph">
+          Audio tracks, instrument voices, return buses, and sidechains form a Directed Acyclic Graph (DAG). Knox evaluates this graph deterministically by computing a topological sort to guarantee that all upstream sources are fully rendered before downstream summing occurs.
+        </p>
+
+        <h2 class="section-heading">Graph Architecture &amp; Node Classification</h2>
+        <div class="flow-diagram">
++--------------------+       +--------------------+       +--------------------+
+| Track 1 (Audio)    |       | Track 2 (Audio)    |       | Track 3 (Synth)    |
+| - Clip Streamer    |       | - Clip Streamer    |       | - PolySynth Voice  |
+| - Insert FX Chain  |       | - Insert FX Chain  |       | - Insert FX Chain  |
++---------+----------+       +---------+----------+       +---------+----------+
+          |                            | (Sidechain Key Tap)        |
+          |                            v                            |
+          |                  +--------------------+                 |
+          |                  | Track 4 (Bass)     |                 |
+          |                  | - Compressor (Side) |                 |
+          |                  +---------+----------+                 |
+          |                            |                            |
+          +------------+---------------+----------------------------+
+                       |
+                       v
+        +------------------------------+
+        | Return Bus A (Reverb Plate)  | &lt;---+ (Aux Send Matrix)
+        | Return Bus B (Stereo Delay)  | &lt;---+
+        +--------------+---------------+
+                       |
+                       v
+        +------------------------------+
+        | Master Bus &amp; True Peak Limiter|
+        +--------------+---------------+
+                       |
+                       v
+        [ miniaudio Hardware Driver Out ]
+        </div>
+
+        <h2 class="section-heading">Topological Sorting via Kahn's Algorithm</h2>
+        <p>
+          Before each audio block or whenever the routing matrix changes, the engine validates graph acyclicity and determines evaluation order using Kahn's algorithm:
+        </p>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>AudioGraph.cpp (Topological Sort)</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>void AudioGraph::compileEvaluationOrder() {
+    std::vector&lt;int&gt; inDegree(m_nodes.size(), 0);
+    for (const auto& edge : m_edges) {
+        inDegree[edge.targetNodeId]++;
+    }
+
+    std::queue&lt;int&gt; readyQueue;
+    for (size_t i = 0; i &lt; m_nodes.size(); ++i) {
+        if (inDegree[i] == 0) readyQueue.push(i);
+    }
+
+    m_executionOrder.clear();
+    while (!readyQueue.empty()) {
+        int u = readyQueue.front();
+        readyQueue.pop();
+        m_executionOrder.push_back(u);
+
+        for (int v : m_adjacencyList[u]) {
+            if (--inDegree[v] == 0) {
+                readyQueue.push(v);
+            }
+        }
+    }
+
+    if (m_executionOrder.size() != m_nodes.size()) {
+        // Cyclic feedback loop detected! Break cycle with single-block delay line
+        resolveFeedbackCycle();
+    }
+}</code></pre>
+        </div>
+
+        <h2 class="section-heading">Plugin Delay Compensation (PDC)</h2>
+        <p>
+          When lookahead limiters or linear-phase equalizers report processing latency ($\Delta t_{	ext{latency}} &gt; 0$), Knox calculates the cumulative delay along all parallel paths to the master bus. Pre-allocated circular ring buffers introduce compensating delay samples onto faster paths:
+        </p>
+        <div class="flow-diagram">
+Track A (Linear Phase EQ): Latency = 512 samples --&gt; Path Delay = 512 samples --&gt; Compensation Delay =   0 samples
+Track B (Analog Saturation): Latency =   0 samples --&gt; Path Delay =   0 samples --&gt; Compensation Delay = 512 samples
+Master Summing Node: Both signals arrive exactly in phase at sample t + 512!
+        </div>
+      </section>
+
+      <!-- SECTION 8: Signalsmith Warp & Time-Stretching -->
+      <section class="doc-section" id="warping">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Time-Stretching</div>
+        <h1 class="doc-hero-title">Signalsmith Warp &amp; Time-Stretching DSP</h1>
+        <p class="lead-paragraph">
+          Audio clips in Knox exist simultaneously in two coordinate domains: continuous unwarped sample coordinates and tempo-quantized musical beat coordinates. Time-stretching is powered by the Signalsmith DSP library, providing real-time phase-vocoder and granular algorithms with transient preservation.
+        </p>
+
+        <h2 class="section-heading">Six Specialized Warp Modes</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Algorithm Family</th>
+                <th>Optimal Musical Content &amp; DSP Characteristics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Beats</strong></td>
+                <td>Granular Slicing</td>
+                <td>Drums, percussion, and rhythmic loops. Detects audio transients and preserves attack transients untouched while stretching the decaying tail.</td>
+              </tr>
+              <tr>
+                <td><strong>Tones</strong></td>
+                <td>Autocorrelation Vocoder</td>
+                <td>Monophonic melodic instruments (vocals, bass guitars, brass, woodwinds). Tracks fundamental pitch to eliminate pitch wobble.</td>
+              </tr>
+              <tr>
+                <td><strong>Texture</strong></td>
+                <td>Stochastic Granular</td>
+                <td>Ambient soundscapes, pads, foley, and sustained atmospheric sounds. Allows granular grain size and randomness modulation.</td>
+              </tr>
+              <tr>
+                <td><strong>Complex</strong></td>
+                <td>Multi-Resolution Phase Vocoder</td>
+                <td>Full multi-instrument mixes, acoustic piano, polyphonic synthesizers. High frequency resolution with phase coherence across bins.</td>
+              </tr>
+              <tr>
+                <td><strong>Complex Pro</strong></td>
+                <td>Formant-Preserved Vocoder</td>
+                <td>Polyphonic material with lead vocals. Formant envelopes are extracted and shifted independently of pitch to prevent "chipmunk" distortion.</td>
+              </tr>
+              <tr>
+                <td><strong>Re-Pitch</strong></td>
+                <td>Varispeed Resampling</td>
+                <td>Classic tape / vinyl record speed changes. Changing playback speed scales the audio pitch proportionally (1 octave up at 2x speed). Zero FFT artifacts.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="section-heading">Coordinate Space Transformation</h2>
+        <p>
+          When an arrangement audio clip is trimmed or slipped, the timeline coordinates ($t_{	ext{beat}}$) map to file samples ($s_{	ext{file}}$) through a piecewise linear interpolation across warp markers:
+        </p>
+        <div class="flow-diagram">
+Arrangement Timeline Beat Coordinate:   B_start --------- B_marker1 --------- B_marker2 --------- B_end
+                                           |                   |                   |                |
+Interpolation via Warp Slope Matrix:       v                   v                   v                v
+Source Audio File Sample Coordinate:    S_start --------- S_marker1 --------- S_marker2 --------- S_end
+        </div>
+      </section>
+
+      <!-- SECTION 9: Modular CV Modulation Matrix -->
+      <section class="doc-section" id="modulation">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Modulation Matrix</div>
+        <h1 class="doc-hero-title">Modular CV Modulation Matrix</h1>
+        <p class="lead-paragraph">
+          Knox features a fully integrated modular Control Voltage (CV) routing subsystem. Any modulation source (LFO, envelope follower, macro knob, MIDI velocity) can be dynamically linked to any parameter on any device or track.
+        </p>
+
+        <h2 class="section-heading">Modulation Architecture Highlights</h2>
+        <ul>
+          <li><strong>32 Poly-LFOs:</strong> Shapes include Sine, Triangle, Ramp Up, Saw Down, Square, Sample &amp; Hold, and Smooth Perlin Noise. Supports musical tempo sync ($1/64$ up to $32$ bars) or free frequency ($0.01\,	ext{Hz}$ to $50\,	ext{Hz}$).</li>
+          <li><strong>32 Envelope Followers:</strong> Real-time audio amplitude detector with adjustable peak/RMS mode, attack time ($0.1\,	ext{ms}$ to $500\,	ext{ms}$), and release time ($1\,	ext{ms}$ to $2000\,	ext{ms}$).</li>
+          <li><strong>32 Global &amp; Track Macro Knobs:</strong> One-to-many parameter mapping with independent minimum, maximum, and exponential curve shaping per target.</li>
+          <li><strong>Bipolar &amp; Unipolar Scaling:</strong> CV links can modulate targets bi-directionally ($\pm 	ext{depth}$) or uni-directionally ($+	ext{depth}$ only).</li>
+        </ul>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>CvMatrix.cpp (CV Link Evaluation)</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>void ModulationMatrix::evaluateParameter(uint32_t trackId, uint32_t deviceId, uint32_t paramIdx, float& value) {
+    float modulationSum = 0.0f;
+    for (const auto& link : m_links) {
+        if (link.targetTrack == trackId && link.targetDevice == deviceId && link.targetParam == paramIdx) {
+            float sourceVal = getSourceValue(link.sourceType, link.sourceIndex);
+            if (link.isBipolar) {
+                modulationSum += sourceVal * link.depth;
+            } else {
+                modulationSum += ((sourceVal * 0.5f) + 0.5f) * link.depth;
+            }
+        }
+    }
+    // Clamp modulated output to valid normalized range [0.0, 1.0]
+    value = std::clamp(value + modulationSum, 0.0f, 1.0f);
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 10: Audio-to-MIDI Analysis Engine -->
+      <section class="doc-section" id="audio-to-midi">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Audio Engine &gt; Audio-to-MIDI</div>
+        <h1 class="doc-hero-title">Audio-to-MIDI Analysis Engine</h1>
+        <p class="lead-paragraph">
+          Knox includes a high-performance offline and real-time audio analysis engine capable of converting monophonic and percussive audio recordings into standard MIDI note events.
+        </p>
+
+        <h2 class="section-heading">Algorithmic Pipeline</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Algorithm</th>
+                <th>Mathematical Basis &amp; Output</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Transient / Onset Detection</strong></td>
+                <td>Spectral Flux &amp; High-Frequency Content (HFC)</td>
+                <td>Computes the positive difference in spectral energy across STFT frames: $SF(t) = \sum_{k} \max(0, |X(t, k)| - |X(t-1, k)|)$. Detects note start timestamps with sample-accurate precision.</td>
+              </tr>
+              <tr>
+                <td><strong>2. Pitch Estimation</strong></td>
+                <td>YIN Algorithm</td>
+                <td>Calculates the cumulative mean normalized difference function $d'_t(	au) = rac{d_t(	au)}{rac{1}{	au} \sum_{j=1}^{	au} d_t(j)}$, identifying the first local minimum below the dip threshold ($0.15$) with parabolic interpolation.</td>
+              </tr>
+              <tr>
+                <td><strong>3. Velocity &amp; Duration Extraction</strong></td>
+                <td>RMS Energy Integration</td>
+                <td>Integrates root-mean-square amplitude across the initial attack transient to determine MIDI velocity ($1..127$). Tracks note decay to place the Note-Off event.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    
+      <!-- SECTION 11: Tutorial 1: Creating a Polyphonic Synthesizer -->
+      <section class="doc-section" id="tutorial-new-synth">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Tutorials &gt; Polyphonic Synthesizer</div>
+        <h1 class="doc-hero-title">Tutorial: Creating a Polyphonic Synthesizer</h1>
+        <p class="lead-paragraph">
+          Learn how to develop a custom C++ polyphonic synthesizer for Knox, complete with anti-aliased PolyBLEP oscillators, an ADSR envelope generator, and a resonant Moog ladder filter.
+        </p>
+
+        <h2 class="section-heading">Step 1: Implement the Voice Class</h2>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>AnalogVoice.h</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>#pragma once
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
+
+namespace knox {
+
+class AnalogVoice {
+public:
+    void noteOn(int note, float velocity, float sampleRate) {
+        m_pitch = note;
+        m_velocity = velocity;
+        m_sampleRate = sampleRate;
+        m_frequency = 440.0f * std::pow(2.0f, (note - 69) / 12.0f);
+        m_phaseInc = m_frequency / sampleRate;
+        m_envelope = 0.0f;
+        m_state = State::Attack;
+        m_active = true;
+    }
+
+    void noteOff() {
+        m_state = State::Release;
+    }
+
+    bool isActive() const { return m_active; }
+    int getPitch() const { return m_pitch; }
+
+    float renderSample(float cutoffHz, float resonance) {
+        if (!m_active) return 0.0f;
+
+        // 1. PolyBLEP Band-Limited Sawtooth Oscillator
+        float rawSaw = (2.0f * m_phase) - 1.0f;
+        float blep = polyBlep(m_phase, m_phaseInc);
+        float oscOut = rawSaw - blep;
+
+        // 2. Advance oscillator phase
+        m_phase += m_phaseInc;
+        if (m_phase &gt;= 1.0f) m_phase -= 1.0f;
+
+        // 3. Simple One-Pole Filter
+        float w = 2.0f * 3.14159265f * (cutoffHz / m_sampleRate);
+        m_filterState += w * (oscOut - m_filterState);
+
+        // 4. Update ADSR Envelope
+        processEnvelope();
+
+        return m_filterState * m_envelope * m_velocity;
+    }
+
+private:
+    float polyBlep(float t, float dt) {
+        if (t &lt; dt) {
+            t /= dt;
+            return t + t - t * t - 1.0f;
+        } else if (t &gt; 1.0f - dt) {
+            t = (t - 1.0f) / dt;
+            return t * t + t + t + 1.0f;
+        }
+        return 0.0f;
+    }
+
+    void processEnvelope() {
+        switch (m_state) {
+            case State::Attack:
+                m_envelope += 0.002f;
+                if (m_envelope &gt;= 1.0f) { m_envelope = 1.0f; m_state = State::Decay; }
+                break;
+            case State::Decay:
+                m_envelope -= 0.0005f;
+                if (m_envelope &lt;= 0.7f) { m_envelope = 0.7f; m_state = State::Sustain; }
+                break;
+            case State::Sustain:
+                break;
+            case State::Release:
+                m_envelope -= 0.001f;
+                if (m_envelope &lt;= 0.0f) { m_envelope = 0.0f; m_active = false; }
+                break;
+        }
+    }
+
+    enum class State { Attack, Decay, Sustain, Release };
+    State m_state{State::Release};
+    float m_phase{0.0f};
+    float m_phaseInc{0.0f};
+    float m_frequency{440.0f};
+    float m_velocity{0.0f};
+    float m_envelope{0.0f};
+    float m_filterState{0.0f};
+    float m_sampleRate{44100.0f};
+    int m_pitch{60};
+    bool m_active{false};
+};
+
+} // namespace knox</code></pre>
+        </div>
+
+        <h2 class="section-heading">Step 2: Implement the Instrument Device</h2>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>AnalogSynth.h</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>#pragma once
+#include "InstrumentDevice.h"
+#include "AnalogVoice.h"
+#include &lt;array&gt;
+
+namespace knox {
+
+class AnalogSynth : public InstrumentDevice {
+public:
+    static constexpr size_t MaxVoices = 16;
+
+    AnalogSynth() {
+        setParamCount(2);
+        setParam(0, 0.6f); // Param 0: Filter Cutoff (normalized)
+        setParam(1, 0.2f); // Param 1: Filter Resonance (normalized)
+    }
+
+    const char* getName() const override { return "Analog Mono/Poly"; }
+
+    void handleNoteOn(int note, float velocity) override {
+        // Allocate voice or steal oldest
+        for (auto& voice : m_voices) {
+            if (!voice.isActive()) {
+                voice.noteOn(note, velocity, m_sampleRate);
+                return;
+            }
+        }
+        m_voices[0].noteOn(note, velocity, m_sampleRate);
+    }
+
+    void handleNoteOff(int note) override {
+        for (auto& voice : m_voices) {
+            if (voice.isActive() && voice.getPitch() == note) {
+                voice.noteOff();
+            }
+        }
+    }
+
+    void processBlock(float* outL, float* outR, uint32_t numFrames) override {
+        float cutoffHz = 100.0f + std::pow(getParam(0), 3.0f) * 18000.0f;
+        float resonance = getParam(1) * 0.95f;
+
+        for (uint32_t i = 0; i &lt; numFrames; ++i) {
+            float sample = 0.0f;
+            for (auto& voice : m_voices) {
+                sample += voice.renderSample(cutoffHz, resonance);
+            }
+            outL[i] += sample * 0.25f;
+            outR[i] += sample * 0.25f;
+        }
+    }
+
+private:
+    std::array&lt;AnalogVoice, MaxVoices&gt; m_voices;
+};
+
+} // namespace knox</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 12: Tutorial 2: Building an Audio Effect -->
+      <section class="doc-section" id="tutorial-new-effect">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Tutorials &gt; Audio Effect</div>
+        <h1 class="doc-hero-title">Tutorial: Building an Audio Effect (Stereo Flanger)</h1>
+        <p class="lead-paragraph">
+          Build a real-time modulated comb-filter stereo flanger effect in C++ with circular delay buffers, quadrature LFO phase modulation, and feedback regeneration.
+        </p>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>StereoFlanger.h</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>#pragma once
+#include "AudioEffectDevice.h"
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+
+namespace knox {
+
+class StereoFlanger : public AudioEffectDevice {
+public:
+    StereoFlanger() {
+        setParamCount(4);
+        setParam(0, 0.3f); // Rate (0.1 Hz to 5.0 Hz)
+        setParam(1, 0.7f); // Depth (0 ms to 10 ms delay swing)
+        setParam(2, 0.5f); // Feedback (-0.95 to +0.95)
+        setParam(3, 0.5f); // Dry/Wet Mix (0.0 to 1.0)
+        
+        m_delayBufferL.resize(4096, 0.0f);
+        m_delayBufferR.resize(4096, 0.0f);
+    }
+
+    const char* getName() const override { return "Stereo Flanger"; }
+
+    void processBlock(float* bufferL, float* bufferR, uint32_t numFrames) override {
+        const float rateHz = 0.1f + getParam(0) * 4.9f;
+        const float maxDelaySamples = (getParam(1) * 0.008f) * m_sampleRate;
+        const float feedback = (getParam(2) - 0.5f) * 1.9f;
+        const float wetMix = getParam(3);
+        const float dryMix = 1.0f - wetMix;
+        const float phaseInc = (2.0f * 3.14159265f * rateHz) / m_sampleRate;
+
+        for (uint32_t i = 0; i &lt; numFrames; ++i) {
+            // Quadrature LFOs (Left and Right 90 degrees out of phase)
+            float lfoL = 0.5f + 0.5f * std::sin(m_lfoPhase);
+            float lfoR = 0.5f + 0.5f * std::cos(m_lfoPhase);
+            m_lfoPhase += phaseInc;
+            if (m_lfoPhase &gt;= 2.0f * 3.14159265f) m_lfoPhase -= 2.0f * 3.14159265f;
+
+            // Read modulated delay tap
+            float delayTimeL = 10.0f + lfoL * maxDelaySamples;
+            float delayTimeR = 10.0f + lfoR * maxDelaySamples;
+
+            float delayedL = readBuffer(m_delayBufferL, delayTimeL);
+            float delayedR = readBuffer(m_delayBufferR, delayTimeR);
+
+            // Write back to circular buffer with feedback
+            m_delayBufferL[m_writePos] = bufferL[i] + delayedL * feedback;
+            m_delayBufferR[m_writePos] = bufferR[i] + delayedR * feedback;
+            m_writePos = (m_writePos + 1) % 4096;
+
+            // Output mix
+            bufferL[i] = bufferL[i] * dryMix + delayedL * wetMix;
+            bufferR[i] = bufferR[i] * dryMix + delayedR * wetMix;
+        }
+    }
+
+private:
+    float readBuffer(const std::vector&lt;float&gt;& buf, float delay) {
+        float rPos = (float)m_writePos - delay;
+        if (rPos &lt; 0.0f) rPos += 4096.0f;
+        int i0 = (int)rPos;
+        int i1 = (i0 + 1) % 4096;
+        float frac = rPos - (float)i0;
+        return buf[i0] + frac * (buf[i1] - buf[i0]); // Linear interpolation
+    }
+
+    std::vector&lt;float&gt; m_delayBufferL;
+    std::vector&lt;float&gt; m_delayBufferR;
+    size_t m_writePos{0};
+    float m_lfoPhase{0.0f};
+};
+
+} // namespace knox</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 13: Tutorial 3: Building a MIDI Processor Effect -->
+      <section class="doc-section" id="tutorial-new-midi-fx">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Tutorials &gt; MIDI Processor</div>
+        <h1 class="doc-hero-title">Tutorial: Building a MIDI Processor Effect</h1>
+        <p class="lead-paragraph">
+          MIDI effects intercept, modify, or generate MIDI note streams in real-time before reaching an instrument. Below is a sample-accurate MIDI Arpeggiator implementation.
+        </p>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>MidiArpeggiator.h</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>#pragma once
+#include "MidiEffectDevice.h"
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+namespace knox {
+
+class MidiArpeggiator : public MidiEffectDevice {
+public:
+    MidiArpeggiator() {
+        setParamCount(2);
+        setParam(0, 0.25f); // Rate (1/16th notes)
+        setParam(1, 0.0f);  // Mode (0 = Up, 1 = Down, 2 = Up/Down)
+    }
+
+    const char* getName() const override { return "Midi Arpeggiator"; }
+
+    void processMidi(MidiBuffer& buffer, double songBeat, double beatStep) override {
+        // 1. Ingest incoming note-on/note-off events from user or track
+        for (const auto& ev : buffer) {
+            if (ev.isNoteOn()) {
+                m_heldNotes.push_back(ev.pitch);
+            } else if (ev.isNoteOff()) {
+                auto it = std::find(m_heldNotes.begin(), m_heldNotes.end(), ev.pitch);
+                if (it != m_heldNotes.end()) m_heldNotes.erase(it);
+            }
+        }
+
+        buffer.clear(); // Replace input with generated arpeggio stream
+
+        if (m_heldNotes.empty()) return;
+
+        std::sort(m_heldNotes.begin(), m_heldNotes.end());
+
+        // 2. Clock trigger detection at 16th-note boundaries (0.25 beats)
+        double rateBeats = 0.25;
+        double currentTick = std::floor(songBeat / rateBeats);
+        double prevTick = std::floor((songBeat - beatStep) / rateBeats);
+
+        if (currentTick != prevTick) {
+            // Trigger next note
+            int noteToPlay = m_heldNotes[m_arpIndex % m_heldNotes.size()];
+            buffer.addNoteOn(0 /* sample offset */, noteToPlay, 0.9f /* velocity */);
+            buffer.addNoteOff(256 /* sample offset */, noteToPlay);
+            m_arpIndex++;
+        }
+    }
+
+private:
+    std::vector&lt;int&gt; m_heldNotes;
+    size_t m_arpIndex{0};
+};
+
+} // namespace knox</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 14: Tutorial 4: Adding a New C ABI Function -->
+      <section class="doc-section" id="tutorial-new-abi">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Tutorials &gt; C ABI Integration</div>
+        <h1 class="doc-hero-title">Tutorial: Adding a New C ABI Function End-to-End</h1>
+        <p class="lead-paragraph">
+          Follow this 5-step checklist to expose a new engine capability across the native C++ boundary into the managed C# user interface.
+        </p>
+
+        <h2 class="section-heading">The 5 Integration Steps</h2>
+        <ol>
+          <li>
+            <strong>1. C Header Declaration:</strong> Add prototype to <code>include/nota/knox_engine.h</code>:
+            <pre><code>NOTA_API NotaResult nota_track_set_stereo_width(KnoxEngine* engine, int32_t track_id, float width);</code></pre>
+          </li>
+          <li>
+            <strong>2. C++ Engine Implementation:</strong> Implement in <code>src/native/knox.engine/src/knox_engine_track.cpp</code>:
+            <pre><code>NotaResult nota_track_set_stereo_width(KnoxEngine* engine, int32_t track_id, float width) {
+    if (!engine) return NOTA_ERR_INVALID_ARG;
+    return ENG(engine)-&gt;setTrackStereoWidth(track_id, width) ? NOTA_OK : NOTA_ERR_NOT_FOUND;
+}</code></pre>
+          </li>
+          <li>
+            <strong>3. Managed P/Invoke Binding:</strong> Add to <code>Knox.Infrastructure/Interop/KnoxEngine.Tracks.cs</code>:
+            <pre><code>[DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+private static extern int nota_track_set_stereo_width(IntPtr handle, int trackId, float width);
+
+public void SetTrackStereoWidth(int trackId, float width) =&gt;
+    ThrowIfFailed(nota_track_set_stereo_width(_handle, trackId, width));</code></pre>
+          </li>
+          <li>
+            <strong>4. Application Service Port:</strong> Declare in <code>Knox.Application/Engine/IAudioEngine.cs</code>:
+            <pre><code>void SetTrackStereoWidth(int trackId, float width);</code></pre>
+          </li>
+          <li>
+            <strong>5. Presentation ViewModel Binding:</strong> Bind to UI Slider in <code>Knox.Presentation/TrackViewModel.cs</code>:
+            <pre><code>[ObservableProperty] private float _stereoWidth = 1.0f;
+partial void OnStereoWidthChanged(float value) =&gt; _engine.SetTrackStereoWidth(TrackId, value);</code></pre>
+          </li>
+        </ol>
+      </section>
+
+      <!-- SECTION 15: Tutorial 5: Writing Automated Smoke Tests -->
+      <section class="doc-section" id="tutorial-smoke-test">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Tutorials &gt; Smoke Tests</div>
+        <h1 class="doc-hero-title">Tutorial: Writing Automated Smoke Tests</h1>
+        <p class="lead-paragraph">
+          The <code>tests/Knox.SmokeTest</code> project validates the engine headlessly via offline rendering without requiring audio hardware. It runs on every commit in continuous integration.
+        </p>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>tests/Knox.SmokeTest/Program.cs</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>using Knox.Infrastructure.Interop;
+
+Console.WriteLine("=== Knox Headless Smoke Test Running ===");
+
+using var engine = new KnoxEngine();
+int track = engine.AddInstrumentTrack();
+engine.AddTrackEffect(track, 0); // Insert Dynamic EQ
+
+// Add test MIDI note
+engine.AddMidiClip(track, startBeat: 0.0, lengthBeats: 4.0);
+engine.SetClipNotes(track, clipId: 0, new[] {
+    new MidiNoteDto(Pitch: 60, StartBeat: 0.0, LengthBeats: 2.0, Velocity: 0.8f)
+});
+
+// Perform offline bounce into memory buffer
+float[] buffer = new float[2048];
+engine.Seek(0);
+engine.RenderOffline(buffer, numFrames: 1024);
+
+// Assert audible output without NaN or clipping
+float rms = CalculateRms(buffer);
+float peak = CalculatePeak(buffer);
+
+Console.WriteLine($"Rendered 1024 frames. RMS: {rms:F4}, Peak: {peak:F4}");
+if (rms &lt; 0.0001f) throw new Exception("FAIL: Engine rendered total silence!");
+if (peak &gt; 1.05f) throw new Exception("FAIL: Signal clipped master ceiling!");
+
+Console.WriteLine("PASS: All headless smoke test assertions passed!");</code></pre>
+        </div>
+      </section>
+    
+      <!-- SECTION 16: Managed Architecture — Knox.Domain -->
+      <section class="doc-section" id="layer-domain">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Managed Architecture &gt; Knox.Domain</div>
+        <h1 class="doc-hero-title">Knox.Domain: Pure Musical Models</h1>
+        <p class="lead-paragraph">
+          <code>Knox.Domain</code> encapsulates the core business logic of music composition, arrangement time coordinates, and domain entities. It has zero dependencies on audio drivers, OS windows, or external libraries.
+        </p>
+
+        <h2 class="section-heading">Key Value Objects &amp; Domain Entities</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Kind</th>
+                <th>Responsibility &amp; Invariants</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Beats</code></td>
+                <td><code>readonly record struct</code></td>
+                <td>Continuous double-precision musical time coordinate. Provides snapping routines to standard subdivisions (1/4, 1/8, 1/16, 1/32, triplets) and conversion to seconds or samples at given BPM.</td>
+              </tr>
+              <tr>
+                <td><code>MidiNote</code></td>
+                <td><code>record</code></td>
+                <td>Musical pitch ($0 \le p \le 127$), start beat, duration, velocity ($0.0 \le v \le 1.0$), and release velocity. Implements immutability.</td>
+              </tr>
+              <tr>
+                <td><code>TrackKind</code></td>
+                <td><code>enum</code></td>
+                <td>Identifies track topology: <code>Audio = 0</code>, <code>Instrument = 1</code>, <code>Return = 2</code>, <code>Group = 3</code>.</td>
+              </tr>
+              <tr>
+                <td><code>WarpMode</code></td>
+                <td><code>enum</code></td>
+                <td>Time-stretching algorithm selector: <code>Beats</code>, <code>Tones</code>, <code>Texture</code>, <code>Complex</code>, <code>ComplexPro</code>, <code>RePitch</code>.</td>
+              </tr>
+              <tr>
+                <td><code>AutomationEnvelope</code></td>
+                <td><code>class</code></td>
+                <td>Maintains sorted list of automation points with Bezier curve tension factor ($-1.0 \le 	au \le 1.0$) for non-linear parameter automation.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 17: Managed Architecture — Knox.Application -->
+      <section class="doc-section" id="layer-application">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Managed Architecture &gt; Knox.Application</div>
+        <h1 class="doc-hero-title">Knox.Application: Ports, Use Cases &amp; DTOs</h1>
+        <p class="lead-paragraph">
+          <code>Knox.Application</code> implements Hexagonal Architecture (Ports and Adapters). It defines the interfaces that decouple presentation from audio hardware and file I/O, orchestrating high-level musical workflows.
+        </p>
+
+        <h2 class="section-heading">Primary Engine Port: IAudioEngine</h2>
+        <p>
+          The <code>IAudioEngine</code> interface represents the entire capability surface of the native audio engine exposed to the managed runtime:
+        </p>
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>IAudioEngine.cs</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>public interface IAudioEngine : IDisposable
+{
+    // Lifecycle & Transport
+    void Start();
+    void Stop();
+    void Play();
+    void Pause();
+    void Seek(double beats);
+    double GetPositionBeats();
+    void SetTempo(double bpm);
+    void SetLoopRange(double startBeat, double endBeat, bool enabled);
+
+    // Track Management
+    int AddAudioTrack();
+    int AddInstrumentTrack();
+    int AddReturnTrack();
+    void DeleteTrack(int trackId);
+    void SetTrackVolume(int trackId, float volume);
+    void SetTrackPan(int trackId, float pan);
+    void SetTrackMute(int trackId, bool isMuted);
+    void SetTrackSolo(int trackId, bool isSoloed);
+    (float Left, float Right) GetTrackPeakMeters(int trackId);
+
+    // Timeline Clips & MIDI
+    int AddAudioClip(int trackId, string filePath, double startBeat);
+    int AddMidiClip(int trackId, double startBeat, double lengthBeats);
+    void SetClipNotes(int trackId, int clipId, ReadOnlySpan&lt;MidiNoteDto&gt; notes);
+    void SetClipWarpMode(int trackId, int clipId, WarpMode mode);
+
+    // Devices & Modular Modulation
+    int AddDevice(int trackId, int deviceTypeId);
+    void SetDeviceParam(int trackId, int deviceIdx, int paramIdx, float normalizedVal);
+    float GetDeviceParam(int trackId, int deviceIdx, int paramIdx);
+    int AddCvLink(CvSource source, int sourceIdx, int targetTrack, int targetDev, int targetParam, float depth, bool isBipolar);
+    void RemoveCvLink(int linkId);
+
+    // Master Bus & Offline Rendering
+    void SetMasterVolume(float volume);
+    void RenderOffline(Span&lt;float&gt; destinationBuffer, int numFrames);
+}</code></pre>
+        </div>
+
+        <h2 class="section-heading">Immutable Data Transfer Objects (DTOs)</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Record DTO</th>
+                <th>Fields &amp; Properties</th>
+                <th>Role in Architecture</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>TrackInfo</code></td>
+                <td><code>int Id, string Name, TrackKind Kind, float Volume, float Pan, bool Muted, bool Soloed</code></td>
+                <td>Snapshot of track strip mixer parameters across boundaries.</td>
+              </tr>
+              <tr>
+                <td><code>ClipInfo</code></td>
+                <td><code>int Id, int TrackId, double StartBeat, double LengthBeats, double OffsetBeats, string Name</code></td>
+                <td>Arrangement timeline placement coordinates.</td>
+              </tr>
+              <tr>
+                <td><code>MidiNoteDto</code></td>
+                <td><code>int Pitch, double StartBeat, double LengthBeats, float Velocity, int Channel</code></td>
+                <td>Sample-accurate MIDI event data marshaled to native memory.</td>
+              </tr>
+              <tr>
+                <td><code>DeviceParamDto</code></td>
+                <td><code>int Index, string Name, string Unit, float Min, float Max, float Default, float Current</code></td>
+                <td>Parameter metadata for generating reactive UI knobs.</td>
+              </tr>
+              <tr>
+                <td><code>CvLinkDto</code></td>
+                <td><code>int LinkId, CvSource Source, int SourceIdx, int TargetTrack, int TargetDev, int TargetParam, float Depth, bool IsBipolar</code></td>
+                <td>Virtual patch cable state in the modular synthesis matrix.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 18: Managed Architecture — Knox.Infrastructure -->
+      <section class="doc-section" id="layer-infrastructure">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Managed Architecture &gt; Knox.Infrastructure</div>
+        <h1 class="doc-hero-title">Knox.Infrastructure: P/Invoke &amp; Serialization</h1>
+        <p class="lead-paragraph">
+          Implements the application ports by wrapping native C ABI calls in safe C# P/Invoke classes and handling atomic file persistence.
+        </p>
+
+        <h2 class="section-heading">P/Invoke FFI Architecture</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Source File</th>
+                <th>Role &amp; Marshaling Mechanics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>KnoxEngine.cs</code></td>
+                <td>Master lifecycle handle. Holds the <code>IntPtr</code> native engine instance and translates non-zero error codes to managed exceptions.</td>
+              </tr>
+              <tr>
+                <td><code>KnoxEngine.Tracks.cs</code></td>
+                <td>Track CRUD operations, faders, pan knobs, mute/solo flags, and track group nesting.</td>
+              </tr>
+              <tr>
+                <td><code>KnoxEngine.Clips.cs</code></td>
+                <td>Timeline audio and MIDI clip positioning, note arrays marshaled with pinned pointers.</td>
+              </tr>
+              <tr>
+                <td><code>KnoxEngine.Devices.cs</code></td>
+                <td>Device instantiation, enumeration, and normalized parameter float get/set.</td>
+              </tr>
+              <tr>
+                <td><code>KnoxEngine.Plugins.cs</code></td>
+                <td>Out-of-process scanner communication, VST3 chunk persistence, and OS window embedding.</td>
+              </tr>
+              <tr>
+                <td><code>Persistence/ProjectService.cs</code></td>
+                <td>Atomic serialization of <code>.nota</code> bundle folders with sample file copying and <code>project.json</code> generation.</td>
+              </tr>
+              <tr>
+                <td><code>DiscordRpcService.cs</code></td>
+                <td>Discord Rich Presence IPC integration broadcasting project name, track count, and BPM.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 19: Managed Architecture — Knox.Presentation -->
+      <section class="doc-section" id="layer-presentation">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Managed Architecture &gt; Knox.Presentation</div>
+        <h1 class="doc-hero-title">Knox.Presentation: Reactive MVVM Architecture</h1>
+        <p class="lead-paragraph">
+          <code>Knox.Presentation</code> coordinates user input, window state, and reactive UI data binding using the Model-View-ViewModel (MVVM) pattern powered by <code>CommunityToolkit.Mvvm</code>.
+        </p>
+
+        <h2 class="section-heading">The 60 FPS Engine Polling Loop</h2>
+        <div class="apple-callout info">
+          <div class="callout-title">💡 Why Polling Instead of Audio Callbacks?</div>
+          Allowing a hard real-time C++ audio thread to invoke C# managed delegates causes unpredictable Garbage Collection stalls, thread priority inversions, and potential deadlocks. Instead, Knox uses a dedicated 60 FPS UI timer that polls lock-free atomic variables in native memory (peak meters, RMS levels, song playhead) without ever stalling the audio thread.
+        </div>
+
+        <h2 class="section-heading">ViewModel Responsibilities &amp; Structure</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>ViewModel Class</th>
+                <th>Reactive Properties &amp; Commands</th>
+                <th>UI Bindings &amp; Logic</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>MainViewModel</code></td>
+                <td><code>ActiveTab</code>, <code>IsPlaying</code>, <code>Bpm</code>, <code>PlayCommand</code>, <code>SaveProjectCommand</code></td>
+                <td>Root application controller; orchestrates track collection, transport state machine, and workspace views.</td>
+              </tr>
+              <tr>
+                <td><code>TrackViewModel</code></td>
+                <td><code>VolumeDb</code>, <code>Pan</code>, <code>IsMuted</code>, <code>IsSoloed</code>, <code>PeakMeterL</code>, <code>PeakMeterR</code></td>
+                <td>Mixer channel strip. Implements logarithmic volume fader scaling ($20\log_{10}(v)$) and 300ms meter decay ballistics.</td>
+              </tr>
+              <tr>
+                <td><code>ArrangementViewModel</code></td>
+                <td><code>ViewportStartBeat</code>, <code>PixelsPerBeat</code>, <code>SnapResolution</code>, <code>SelectedClips</code></td>
+                <td>Linear multi-track timeline coordinate mapping ($X = 	ext{Beat} 	imes 	ext{Zoom}$), multi-selection lasso, and clip dragging.</td>
+              </tr>
+              <tr>
+                <td><code>PianoRollViewModel</code></td>
+                <td><code>SelectedNotes</code>, <code>ActiveKeyScale</code>, <code>QuantizeGrid</code>, <code>VelocityStalkHeight</code></td>
+                <td>Interactive note editor with scale highlighting, velocity stalk dragging, and note length manipulation.</td>
+              </tr>
+              <tr>
+                <td><code>ModularViewModel</code></td>
+                <td><code>CvCables</code>, <code>SelectedModulator</code>, <code>ConnectCableCommand</code></td>
+                <td>Virtual Eurorack patch bay; calculates cubic bezier curves with dynamic gravitational sag for patch cables.</td>
+              </tr>
+              <tr>
+                <td><code>DeviceChainViewModel</code></td>
+                <td><code>Devices</code>, <code>SelectedDevice</code>, <code>AddDeviceCommand</code></td>
+                <td>Dynamically constructs knob and slider controls with formatted engineering units (Hz, dB, %, ms).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+<!-- SECTION 20: Managed Architecture — Knox.App -->
+      <section class="doc-section" id="layer-app">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Managed Architecture &gt; Knox.App</div>
+        <h1 class="doc-hero-title">Knox.App: Avalonia 12 UI Views &amp; Controls</h1>
+        <p class="lead-paragraph">
+          <code>Knox.App</code> is the desktop composition root built with Avalonia 12. It delivers cross-platform GPU-accelerated rendering across Windows (DirectX/Vulkan), macOS (Metal), and Linux (OpenGL/Vulkan) via Skia.
+        </p>
+
+        <h2 class="section-heading">High-Performance Direct GPU Rendering (DrawingContext)</h2>
+        <p>
+          Standard XAML UI controls (such as <code>Rectangle</code> or <code>Path</code> elements in a canvas) cannot scale to high-track-count DAWs containing hundreds of thousands of waveform samples or MIDI notes without crippling memory consumption and GC churn.
+        </p>
+        <p>
+          Knox's custom controls override Avalonia's <code>Render(DrawingContext context)</code> method to issue immediate-mode GPU drawing commands directly into Skia drawing pipelines:
+        </p>
+
+        <div class="apple-code-container">
+          <div class="apple-code-header">
+            <span>WaveformCanvas.cs (Direct Skia Waveform Rendering)</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>public class WaveformCanvas : Control
+{
+    public static readonly StyledProperty&lt;float[]?&gt; PeakDataProperty =
+        AvaloniaProperty.Register&lt;WaveformCanvas, float[]?&gt;(nameof(PeakData));
+
+    public float[]? PeakData
+    {
+        get =&gt; GetValue(PeakDataProperty);
+        set =&gt; SetValue(PeakDataProperty, value);
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        base.Render(context);
+        var peaks = PeakData;
+        if (peaks == null || peaks.Length == 0) return;
+
+        double width = Bounds.Width;
+        double midY = Bounds.Height / 2.0;
+        var pen = new Pen(new SolidColorBrush(Color.FromRgb(0, 113, 227)), 1.0);
+
+        // Render peak envelope directly using GPU polylines
+        for (int x = 0; x &lt; (int)width; ++x)
+        {
+            int sampleIdx = (int)((double)x / width * peaks.Length);
+            float peak = peaks[sampleIdx];
+            double h = peak * midY;
+            context.DrawLine(pen, new Point(x, midY - h), new Point(x, midY + h));
+        }
+    }
+}</code></pre>
+        </div>
+
+        <h2 class="section-heading">Catalog of Custom Specialized Controls</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Custom Control</th>
+                <th>File Path</th>
+                <th>Interactivity &amp; Graphical Features</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Knob.cs</code></td>
+                <td><code>Controls/Knob.cs</code></td>
+                <td>Rotary knob with circular arc track, polar drag gesture with fine vertical tuning ($	ext{Shift} + 	ext{drag}$), and text tooltip.</td>
+              </tr>
+              <tr>
+                <td><code>Fader.cs</code></td>
+                <td><code>Controls/Fader.cs</code></td>
+                <td>Mixer channel fader with $0\,	ext{dB}$ unity center detent and logarithmic dB scale markings.</td>
+              </tr>
+              <tr>
+                <td><code>MeterBar.cs</code></td>
+                <td><code>Controls/MeterBar.cs</code></td>
+                <td>Stereo audio meter showing fast-attack RMS bar, peak-hold line, and red clipping LED indicator calibrated in dBFS.</td>
+              </tr>
+              <tr>
+                <td><code>DynamicEqCurve.cs</code></td>
+                <td><code>Controls/DynamicEqCurve.cs</code></td>
+                <td>Interactive 6-band EQ filter response curve. Users can drag filter nodes to sweep frequency and gain, adjust Q with mouse wheel, and view live FFT spectrum.</td>
+              </tr>
+              <tr>
+                <td><code>AuroraViz.cs</code></td>
+                <td><code>Controls/AuroraViz.cs</code></td>
+                <td>Real-time stereo phase correlation vector scope (Goniometer) and 64-band logarithmic frequency analyzer.</td>
+              </tr>
+              <tr>
+                <td><code>FluxVectorPad.cs</code></td>
+                <td><code>Controls/FluxVectorPad.cs</code></td>
+                <td>2D XY joystick pad for morphing across 4 wavetable oscillators or modulating effect macro pairs in real time.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 21: Synthesizers Catalog -->
+      <section class="doc-section" id="catalog-synths">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; DSP Catalog &gt; Synthesizers</div>
+        <h1 class="doc-hero-title">Synthesizers &amp; Sound Engines Catalog (10 Instruments)</h1>
+        <p class="lead-paragraph">
+          Knox features 10 built-in synthesizers spanning analog modeling, FM, wavetable, additive, and physical modeling synthesis.
+        </p>
+
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Synth Name</th>
+                <th>Synthesis Paradigm</th>
+                <th>Key Features &amp; Architecture</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>PolySynth</strong></td>
+                <td>Subtractive Analog</td>
+                <td>Dual DCO with PolyBLEP anti-aliasing, sub-oscillator, 24dB Moog ladder filter, dual ADSR envelopes, and stereo chorus.</td>
+              </tr>
+              <tr>
+                <td><strong>Operator FM</strong></td>
+                <td>Frequency Modulation</td>
+                <td>4 Operators, 11 routing algorithms, feedback loop on Op 4, independent ratio/fixed frequencies, and envelope scaling.</td>
+              </tr>
+              <tr>
+                <td><strong>Wavetable</strong></td>
+                <td>Wavetable Synthesis</td>
+                <td>Dual 256-frame wavetables, spectral folding, position morphing LFO, and unipolar/bipolar phase distortion.</td>
+              </tr>
+              <tr>
+                <td><strong>SubBass</strong></td>
+                <td>808 / Bass Modeling</td>
+                <td>Pure sine sub-oscillator with harmonic drive saturation, transient click generator, and pitch glide glide portamento.</td>
+              </tr>
+              <tr>
+                <td><strong>AnalogMono</strong></td>
+                <td>Monophonic Lead/Bass</td>
+                <td>Triple oscillator with hard sync, diode ladder filter, legato glide, and overdrive saturation.</td>
+              </tr>
+              <tr>
+                <td><strong>ModularSynth</strong></td>
+                <td>Modular Sandbox</td>
+                <td>Virtual Eurorack sandbox with patchable VCO, VCF, VCA, and LFO modules.</td>
+              </tr>
+              <tr>
+                <td><strong>GranularEngine</strong></td>
+                <td>Granular Synthesis</td>
+                <td>Extracts audio grains from loaded samples with controllable grain size ($10\,	ext{ms}$ to $500\,	ext{ms}$), spray, and density.</td>
+              </tr>
+              <tr>
+                <td><strong>StringResonator</strong></td>
+                <td>Physical Modeling</td>
+                <td>Karplus-Strong tuned delay line with non-linear strike exciter and dampening filter for plucked strings.</td>
+              </tr>
+              <tr>
+                <td><strong>AdditiveEngine</strong></td>
+                <td>Additive Synthesis</td>
+                <td>64 sine partials with real-time spectral tilt, odd/even harmonic balance, and formant vowel filters.</td>
+              </tr>
+              <tr>
+                <td><strong>DrumSynth</strong></td>
+                <td>Analog Drum Modeling</td>
+                <td>8 dedicated percussion voices: Kick (pitch-swept sine + transient), Snare (dual-sine + noise burst), Hi-Hat (6-oscillator metallic noise), Clap, Tom, Rim, Perc, and Cymbal.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 22: Audio Effects Catalog -->
+      <section class="doc-section" id="catalog-effects">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; DSP Catalog &gt; Audio Effects</div>
+        <h1 class="doc-hero-title">Audio Effects Catalog (10 Effects)</h1>
+        <p class="lead-paragraph">
+          All built-in effects are optimized for hard real-time execution with zero allocation and denormal protection.
+        </p>
+
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Effect Name</th>
+                <th>Category</th>
+                <th>Algorithm &amp; Parameter Highlights</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Dynamic EQ</strong></td>
+                <td>Equalizer / Dynamics</td>
+                <td>6-band parametric equalizer where each band can act as a dynamic compressor or expander with adjustable threshold and attack/release.</td>
+              </tr>
+              <tr>
+                <td><strong>Glue Compressor</strong></td>
+                <td>VCA Bus Compressor</td>
+                <td>Analog VCA model with fixed attack/release ratios, sidechain highpass filter, and dry/wet parallel compression control.</td>
+              </tr>
+              <tr>
+                <td><strong>Stereo Delay</strong></td>
+                <td>Time / Echo</td>
+                <td>Tempo-synced delay lines ($1/64$ to $2$ bars), ping-pong stereo cross-feedback, and highpass/lowpass feedback damping filters.</td>
+              </tr>
+              <tr>
+                <td><strong>Reverb Shimmer/Plate</strong></td>
+                <td>Spatial / Ambience</td>
+                <td>Feedback Delay Network (FDN) with 8 delay lines, householder matrix diffusion, and pitch-shifted +1 octave shimmer tank.</td>
+              </tr>
+              <tr>
+                <td><strong>Saturator / Wavefolder</strong></td>
+                <td>Distortion / Harmonics</td>
+                <td>Selectable curves: Soft Tape, Asymmetric Tube, Diode Clipper, and West Coast Wavefolder with $4	imes$ oversampling.</td>
+              </tr>
+              <tr>
+                <td><strong>Phaser &amp; Flanger</strong></td>
+                <td>Modulation</td>
+                <td>4 to 12-stage allpass phaser with quadrature LFO modulation and bucket-brigade flanger delay.</td>
+              </tr>
+              <tr>
+                <td><strong>Chorus / Dimension</strong></td>
+                <td>Stereo Width</td>
+                <td>3-phase stereo chorus and multi-voice dimension expander with Haas delay stereo widening.</td>
+              </tr>
+              <tr>
+                <td><strong>Bitcrusher</strong></td>
+                <td>Lo-Fi / Degradation</td>
+                <td>Continuous bit depth reduction ($1$ to $16$ bits), sample rate decimation ($44.1\,	ext{kHz}$ to $500\,	ext{Hz}$), and anti-aliasing filter.</td>
+              </tr>
+              <tr>
+                <td><strong>Auto-Filter</strong></td>
+                <td>Filter / Modulation</td>
+                <td>State-variable filter (Lowpass, Bandpass, Highpass, Notch) modulated by an audio envelope follower and tempo-synced LFO.</td>
+              </tr>
+              <tr>
+                <td><strong>Limiter &amp; Maximizer</strong></td>
+                <td>Mastering / Dynamics</td>
+                <td>Lookahead brickwall true-peak limiter with inter-sample peak (ISP) detection and auto-release envelope.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 23: Racks Architecture -->
+      <section class="doc-section" id="catalog-racks">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; DSP Catalog &gt; Racks</div>
+        <h1 class="doc-hero-title">Racks: Instrument, Drum &amp; Audio Effect Racks</h1>
+        <p class="lead-paragraph">
+          Racks are modular container devices hosting multiple parallel signal chains with unified macro controls, chain selectors, and choke groups.
+        </p>
+
+        <h2 class="section-heading">Rack Variations</h2>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Rack Type</th>
+                <th>File / Header</th>
+                <th>Routing Architecture &amp; Features</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Instrument Rack</strong></td>
+                <td><code>RackInstrument.h</code></td>
+                <td>Hosts $N$ parallel instrument chains. Each chain contains its own synth and insert FX. Features 8 Macro Knobs mapping one knob to multiple chain parameters with custom min/max bounds.</td>
+              </tr>
+              <tr>
+                <td><strong>Drum Rack</strong></td>
+                <td><code>DrumRack.h</code></td>
+                <td>128-pad drum matrix where each pad corresponds to a MIDI trigger note ($0..127$). Features Choke Groups ($1..8$) to choke open hi-hats, per-pad tuning, decay VCA, and individual chain effect inserts.</td>
+              </tr>
+              <tr>
+                <td><strong>Audio Effect Rack</strong></td>
+                <td><code>RackDevice.h</code></td>
+                <td>Splits incoming stereo audio across parallel effect chains (e.g. Dry/Wet, Multi-band frequency splitting, or Mid/Side parallel processing).</td>
+              </tr>
+              <tr>
+                <td><strong>MIDI Effect Rack</strong></td>
+                <td><code>RackMidi.h</code></td>
+                <td>Parallel MIDI processors allowing velocity-zone splits, key-zone splits, and parallel arpeggiators.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="section-heading">Chain Selector &amp; Macro Mapping</h2>
+        <p>
+          The Chain Selector allows smooth crossfading across parallel chains using a single continuous controller parameter. 8 global Macro Knobs allow users to control dozens of native parameters simultaneously with independent inversion and scaling curves.
+        </p>
+      </section>
+
+      <!-- SECTION 24: VST3 / AU Plugin Hosting & Scanworker -->
+      <section class="doc-section" id="catalog-plugins">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; DSP Catalog &gt; Plugin Hosting</div>
+        <h1 class="doc-hero-title">VST3 / AU Plugin Hosting &amp; Scanworker</h1>
+        <p class="lead-paragraph">
+          Knox hosts third-party VST3 (Windows/macOS/Linux) and AudioUnit (macOS) plugins with out-of-process sandboxed scanning and seamless native OS window embedding.
+        </p>
+
+        <h2 class="section-heading">Out-of-Process Isolation Scanner (knox-scanworker)</h2>
+        <div class="flow-diagram">
++------------------------------------+          IPC (Named Pipe / Shared Mem)         +-------------------------------------+
+|           KNOX MAIN DAW            | &lt;============================================&gt; |          knox-scanworker            |
+|                                    |                                                |                                     |
+| 1. Discovers plugin file on disk   |  -- "Scan C:/Plugins/Synth.vst3" -------------&gt; | 2. Loads dynamic binary in sandbox  |
+| 3. Awaits JSON descriptor response | &lt;-- { Name, Vendor, NumInputs, Params } ------- | 3. Extracts factory &amp; parameters    |
+|                                    |                                                |                                     |
+| * Crash Proof: If plugin crashes * | &lt;-- [Process Crash / Access Violation Detected]| * Worker terminates safely *        |
+| DAW marks plugin as "Blacklisted"  |                                                | Main DAW remains 100% unaffected!   |
++------------------------------------+                                                +-------------------------------------+
+        </div>
+
+        <h2 class="section-heading">VST3 Architecture &amp; Dual-Interface Model</h2>
+        <p>
+          VST3 plugins separate real-time signal processing from user interface manipulation via two distinct COM interfaces:
+        </p>
+        <ul>
+          <li><strong>Steinberg::Vst::IComponent:</strong> Handles real-time audio processing. Knox passes <code>ProcessData</code> containing 32-bit float audio bus buffers, incoming MIDI events via <code>IEventList</code>, and sample-accurate parameter automation via <code>IParameterChanges</code>.</li>
+          <li><strong>Steinberg::Vst::IEditController:</strong> Manages the plugin's graphical user interface, parameter normalization ($0.0 \le v \le 1.0$), and string formatting.</li>
+        </ul>
+
+        <h2 class="section-heading">Native OS Window Embedding</h2>
+        <p>
+          When a user opens a plugin GUI, Knox creates a native platform window container and attaches the plugin's native editor view:
+        </p>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Platform</th>
+                <th>OS Window System</th>
+                <th>API Embedding Mechanism</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Windows</strong></td>
+                <td>Win32 HWND</td>
+                <td><code>::SetParent(pluginHwnd, hostWindowHwnd)</code> with window styles <code>WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>macOS</strong></td>
+                <td>Cocoa NSView</td>
+                <td><code>[hostNSView addSubview:pluginNSView]</code> with auto-resizing mask constraints.</td>
+              </tr>
+              <tr>
+                <td><strong>Linux</strong></td>
+                <td>X11 Window</td>
+                <td><code>XReparentWindow(display, pluginWindow, hostWindow, 0, 0)</code> with event filtering.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="section-heading">State Chunk Serialization</h2>
+        <p>
+          Plugins store their full internal configuration (preset data, oscillator settings, sample references) as opaque binary streams. Knox captures this state via <code>IComponent::getState</code> and <code>IEditController::getState</code>, serializing the resulting byte blobs into <code>.nota/plugin-states/dev_{trackId}_{deviceIdx}.bin</code> during session saves.
+        </p>
+      </section>
+
+      <!-- Anchor for Header Link -->
+      <div id="c-abi-reference"></div>
+
+      <!-- SECTION 25: C ABI Lifecycle -->
+      <section class="doc-section" id="abi-lifecycle">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Lifecycle</div>
+        <h1 class="doc-hero-title">1. Engine Lifecycle &amp; Global Diagnostics</h1>
+        <p class="lead-paragraph">
+          Functions for initializing, starting, stopping, and destroying the Knox native engine instance.
+        </p>
+
+        <div class="api-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">knox_engine_create</h3>
+            <span class="badge badge-c">Lifecycle</span>
+          </div>
+          <div class="api-signature">NOTA_API KnoxEngine* knox_engine_create(void);</div>
+          <p>Initializes a new native Knox audio engine instance, pre-allocates SPSC lock-free command queues, and constructs the initial audio graph snapshot.</p>
+        </div>
+
+        <div class="api-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">knox_engine_destroy</h3>
+            <span class="badge badge-c">Lifecycle</span>
+          </div>
+          <div class="api-signature">NOTA_API void knox_engine_destroy(KnoxEngine* engine);</div>
+          <p>Stops the audio thread, closes audio and MIDI hardware device handles, and frees all engine memory.</p>
+        </div>
+
+        <div class="api-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">knox_engine_start</h3>
+            <span class="badge badge-c">Lifecycle</span>
+          </div>
+          <div class="api-signature">NOTA_API NotaResult knox_engine_start(KnoxEngine* engine);</div>
+          <p>Opens the default hardware audio output device (WASAPI / CoreAudio / ALSA) and launches the hard real-time audio thread.</p>
+        </div>
+
+        <div class="api-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">knox_engine_stop</h3>
+            <span class="badge badge-c">Lifecycle</span>
+          </div>
+          <div class="api-signature">NOTA_API NotaResult knox_engine_stop(KnoxEngine* engine);</div>
+          <p>Stops the audio thread and closes output streams without deallocating the engine instance.</p>
+        </div>
+      </section>
+
+      <!-- SECTION 26: C ABI Transport -->
+      <section class="doc-section" id="abi-transport">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Transport</div>
+        <h1 class="doc-hero-title">2. Transport &amp; Playhead Management</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_transport_play(KnoxEngine* e)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Starts transport playback from current playhead position.</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_pause(KnoxEngine* e)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Pauses playback, retaining current playhead position.</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_stop(KnoxEngine* e)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Stops playback and rewinds playhead to 0 or last start point.</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_seek(KnoxEngine* e, double beats)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Seeks playhead to specified musical beat coordinate.</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_get_pos_beats(KnoxEngine* e)</code></td>
+                <td><code>double</code></td>
+                <td>Returns the current continuous playhead position in musical beats.</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_set_tempo(KnoxEngine* e, double bpm)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Updates global transport tempo in BPM ($20.0 \le 	ext{BPM} \le 999.0$).</td>
+              </tr>
+              <tr>
+                <td><code>nota_transport_set_loop(KnoxEngine* e, int enabled, double start, double end)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Enables or disables timeline looping between start and end beats.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 27: C ABI Tracks -->
+      <section class="doc-section" id="abi-tracks">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Tracks</div>
+        <h1 class="doc-hero-title">3. Track Management &amp; Mixing</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_track_add_audio(KnoxEngine* e)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Creates a new audio track and returns its unique Track ID.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_add_instrument(KnoxEngine* e)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Creates a new instrument track and returns its unique Track ID.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_add_return(KnoxEngine* e)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Creates a new return/aux bus track and returns its unique Track ID.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_delete(KnoxEngine* e, int32_t track_id)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Removes a track and its entire insert chain from the audio graph.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_set_volume(KnoxEngine* e, int32_t track_id, float volume)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets linear volume gain ($0.0 \le v \le 2.0$, where $1.0 = 0\,	ext{dB}$).</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_set_pan(KnoxEngine* e, int32_t track_id, float pan)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets stereo panning ($-1.0$ full left, $0.0$ center, $+1.0$ full right).</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_set_mute(KnoxEngine* e, int32_t track_id, int mute)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Mutes ($1$) or unmutes ($0$) the track.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_set_solo(KnoxEngine* e, int32_t track_id, int solo)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Solos ($1$) or unsolos ($0$) the track.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_get_peak_meter(KnoxEngine* e, int32_t track_id, float* left, float* right)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Retrieves peak amplitude values for Left and Right channels.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 28: C ABI Clips -->
+      <section class="doc-section" id="abi-clips">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Clips</div>
+        <h1 class="doc-hero-title">4. Clip Scheduling &amp; Timeline</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_clip_add_midi(KnoxEngine* e, int32_t track_id, double start, double length)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Adds a MIDI clip to the track at specified beat coordinates.</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_add_audio(KnoxEngine* e, int32_t track_id, const char* path, double start)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Loads an audio file and places an audio clip on the track.</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_move(KnoxEngine* e, int32_t track_id, int32_t clip_id, double new_start)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Relocates a clip to a new start position on the timeline.</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_set_length(KnoxEngine* e, int32_t track_id, int32_t clip_id, double length)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Trims or extends the active playback length of a clip in beats.</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_set_offset(KnoxEngine* e, int32_t track_id, int32_t clip_id, double offset)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets slip start offset inside the audio file or MIDI sequence.</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_set_warp_mode(KnoxEngine* e, int32_t track_id, int32_t clip_id, int mode)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets time-stretching algorithm (Beats, Tones, Complex, etc.).</td>
+              </tr>
+              <tr>
+                <td><code>nota_clip_set_notes(KnoxEngine* e, int32_t track_id, int32_t clip_id, const NotaMidiNote* notes, int32_t count)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Replaces MIDI notes inside a MIDI clip with a new note array.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 29: C ABI Devices -->
+      <section class="doc-section" id="abi-devices">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Devices</div>
+        <h1 class="doc-hero-title">5. Device &amp; Parameter Manipulation</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_track_add_device(KnoxEngine* e, int32_t track_id, int32_t device_type)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Instantiates a built-in synth or audio effect on the track.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_remove_device(KnoxEngine* e, int32_t track_id, int32_t device_idx)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Removes a device from the track insert chain.</td>
+              </tr>
+              <tr>
+                <td><code>nota_device_get_param_count(KnoxEngine* e, int32_t track_id, int32_t device_idx)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Returns the total number of controllable parameters for the device.</td>
+              </tr>
+              <tr>
+                <td><code>nota_device_set_param(KnoxEngine* e, int32_t track_id, int32_t device_idx, int32_t param_idx, float val)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets normalized parameter value ($0.0 \le v \le 1.0$) via SPSC queue.</td>
+              </tr>
+              <tr>
+                <td><code>nota_device_get_param(KnoxEngine* e, int32_t track_id, int32_t device_idx, int32_t param_idx)</code></td>
+                <td><code>float</code></td>
+                <td>Retrieves current normalized parameter value.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 30: C ABI Automation -->
+      <section class="doc-section" id="abi-automation">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Automation</div>
+        <h1 class="doc-hero-title">6. Parameter Automation Curves</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_automation_add_point(KnoxEngine* e, int32_t track_id, int32_t device_idx, int32_t param_idx, double time, float val, float tension)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Inserts an automation point with Bezier curve tension factor ($-1.0 \le 	au \le 1.0$).</td>
+              </tr>
+              <tr>
+                <td><code>nota_automation_remove_point(KnoxEngine* e, int32_t track_id, int32_t device_idx, int32_t param_idx, int32_t point_idx)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Deletes an automation point from the parameter envelope.</td>
+              </tr>
+              <tr>
+                <td><code>nota_automation_clear(KnoxEngine* e, int32_t track_id, int32_t device_idx, int32_t param_idx)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Clears all automation points for the specified parameter lane.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 31: C ABI Modulation -->
+      <section class="doc-section" id="abi-modulation">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Modulation</div>
+        <h1 class="doc-hero-title">7. Modular CV Modulation Links</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_mod_add_cv_link(KnoxEngine* e, int src_type, int src_idx, int target_track, int target_dev, int target_param, float depth, int is_bipolar)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Creates a virtual CV cable routing modulation from source (LFO, follower, macro) to destination parameter.</td>
+              </tr>
+              <tr>
+                <td><code>nota_mod_remove_cv_link(KnoxEngine* e, int32_t link_id)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Disconnects and deletes a virtual CV modulation link.</td>
+              </tr>
+              <tr>
+                <td><code>nota_mod_set_cv_depth(KnoxEngine* e, int32_t link_id, float depth)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Adjusts modulation intensity depth ($-1.0 \le d \le 1.0$).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 32: C ABI Session & Metering -->
+      <section class="doc-section" id="abi-session">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Session &amp; Bounce</div>
+        <h1 class="doc-hero-title">8. Master Bus, Metering &amp; Offline Bounce</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_session_set_master_volume(KnoxEngine* e, float volume)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets global master output volume fader ($1.0 = 0\,	ext{dB}$).</td>
+              </tr>
+              <tr>
+                <td><code>nota_session_get_master_meter(KnoxEngine* e, float* peak_l, float* peak_r, float* rms_l, float* rms_r)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Retrieves instantaneous Peak and RMS levels for the Master bus.</td>
+              </tr>
+              <tr>
+                <td><code>nota_session_render_offline(KnoxEngine* e, float* out_interleaved, int32_t num_frames)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Renders audio blocks faster than real-time into memory for bouncing stems or smoke testing.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 33: C ABI Racks -->
+      <section class="doc-section" id="abi-racks">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Racks</div>
+        <h1 class="doc-hero-title">9. Multi-Chain Racks &amp; Macro Routing</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_rack_add_chain(KnoxEngine* e, int32_t track_id, int32_t rack_idx)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Appends a new parallel processing chain to an existing Rack device.</td>
+              </tr>
+              <tr>
+                <td><code>nota_rack_set_macro(KnoxEngine* e, int32_t track_id, int32_t rack_idx, int32_t macro_idx, float val)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Sets Macro knob value ($0.0 \le v \le 1.0$), updating all mapped targets.</td>
+              </tr>
+              <tr>
+                <td><code>nota_rack_map_macro(KnoxEngine* e, int32_t track_id, int32_t rack_idx, int32_t macro_idx, int32_t chain_idx, int32_t dev_idx, int32_t param_idx, float min, float max)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Maps a macro knob to a chain parameter with custom minimum and maximum bounds.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 34: C ABI Freeze -->
+      <section class="doc-section" id="abi-freeze">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Track Freeze</div>
+        <h1 class="doc-hero-title">10. Track Freeze &amp; Resource Management</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_track_freeze(KnoxEngine* e, int32_t track_id)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Renders track instruments and effects into a temporary disk buffer, disabling real-time DSP to conserve CPU.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_unfreeze(KnoxEngine* e, int32_t track_id)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Re-enables live real-time DSP synthesis and discards the frozen audio buffer.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_is_frozen(KnoxEngine* e, int32_t track_id)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Returns $1$ if the track is frozen, $0$ otherwise.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 35: C ABI Plugins -->
+      <section class="doc-section" id="abi-plugins">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; C ABI Reference &gt; Plugins</div>
+        <h1 class="doc-hero-title">11. Third-Party Plugin Hosting</h1>
+        <div class="table-box">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>C Function Signature</th>
+                <th>Return Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nota_plugin_scan_directory(KnoxEngine* e, const char* path)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Invokes out-of-process scanner on directory to detect VST3 and AU plugins.</td>
+              </tr>
+              <tr>
+                <td><code>nota_track_load_plugin(KnoxEngine* e, int32_t track_id, const char* plugin_id)</code></td>
+                <td><code>int32_t</code></td>
+                <td>Instantiates a hosted third-party plugin on the track insert chain.</td>
+              </tr>
+              <tr>
+                <td><code>nota_plugin_open_editor(KnoxEngine* e, int32_t track_id, int32_t device_idx, void* parent_window_handle)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Attaches native plugin GUI to host window (Win32 HWND, Cocoa NSView, X11 Window).</td>
+              </tr>
+              <tr>
+                <td><code>nota_plugin_get_chunk(KnoxEngine* e, int32_t track_id, int32_t device_idx, void* buffer, int32_t* size)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Captures opaque binary state chunk from plugin for project serialization.</td>
+              </tr>
+              <tr>
+                <td><code>nota_plugin_set_chunk(KnoxEngine* e, int32_t track_id, int32_t device_idx, const void* buffer, int32_t size)</code></td>
+                <td><code>NotaResult</code></td>
+                <td>Restores opaque binary state chunk into hosted plugin instance.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    
+      <!-- SECTION 36: Project File Bundle Format (.nota) -->
+      <section class="doc-section" id="persistence">
+        <div class="doc-breadcrumbs">Knox Documentation &gt; Storage &gt; File Bundle</div>
+        <h1 class="doc-hero-title">Project File Bundle Format (.nota)</h1>
+        <p class="lead-paragraph">
+          Knox saves DAW sessions as directory bundles with the <code>.nota</code> extension. This package architecture ensures that referenced audio files, plugin state blobs, and timeline arrangements remain self-contained and portable across operating systems.
+        </p>
+
+        <h2 class="section-heading">Bundle Directory Layout</h2>
+        <div class="flow-diagram">
+MySong.nota/
+├── project.json         # Human-readable JSON containing tracks, clips, notes, and automation
+├── project.json.bak     # Atomic backup copy (safe against power failure or OS crash)
+├── samples/             # Referenced WAV/FLAC audio files copied into the project bundle
+└── plugin-states/       # Opaque binary state blobs for hosted VST3 and AU plugins
+    ├── dev_0_vst3.bin
+    └── dev_1_vst3.bin
+        </div>
+
+        <h2 class="section-heading">Atomic Serialization Mechanics</h2>
+        <p>
+          To prevent corruption if an operating system shuts down mid-save, <code>ProjectService.cs</code> implements atomic file replacement:
+        </p>
+        <ol>
+          <li>Serializes current live engine state into an in-memory <code>ProjectDocument</code> DTO.</li>
+          <li>Copies any newly imported external audio sample files into the local <code>samples/</code> directory.</li>
+          <li>Writes the serialized JSON to a temporary file: <code>project.json.tmp</code>.</li>
+          <li>Atomically replaces <code>project.json</code> using OS filesystem primitives (<code>File.Replace</code> / POSIX atomic rename).</li>
+        </ol>
+      </section>
+    
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function copyCode(btn) {
+      const pre = btn.closest('.apple-code-container').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => btn.innerText = orig, 1600);
+      });
+    }
+
+    function handleSearch(query) {
+      const q = query.toLowerCase().trim();
+      const rows = document.querySelectorAll('table.apple-table tbody tr');
+      const sections = document.querySelectorAll('.doc-section');
+      const sidebarItems = document.querySelectorAll('.sidebar-item');
+      const cards = document.querySelectorAll('.api-card');
+
+      if (!q) {
+        rows.forEach(r => r.style.display = '');
+        sections.forEach(s => s.style.display = '');
+        sidebarItems.forEach(t => t.style.display = '');
+        cards.forEach(c => c.style.display = '');
+        return;
+      }
+
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+
+      cards.forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+
+      sections.forEach(sec => {
+        sec.style.display = sec.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+
+      sidebarItems.forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    // ScrollSpy active link tracking
+    window.addEventListener('DOMContentLoaded', () => {
+      const sections = document.querySelectorAll('.doc-section');
+      const links = document.querySelectorAll('.sidebar-item a');
+
+      function onScroll() {
+        let current = '';
+        const scrollPos = window.scrollY || document.documentElement.scrollTop;
+        sections.forEach(section => {
+          const top = section.offsetTop - 120;
+          if (scrollPos >= top) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        if (current) {
+          links.forEach(link => {
+            link.parentElement.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+              link.parentElement.classList.add('active');
+            }
+          });
+        }
+      }
+
+      window.addEventListener('scroll', onScroll);
+
+      // Smooth scroll on anchor clicks + close mobile drawer
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          const targetEl = document.querySelector(targetId);
+          if (targetEl) {
+            e.preventDefault();
+            history.pushState(null, null, targetId);
+            targetEl.scrollIntoView({ behavior: 'smooth' });
+            if (window.innerWidth <= 960) {
+              const sb = document.getElementById('sidebar');
+              if (sb) sb.classList.remove('open');
+            }
+          }
+        });
+      });
+
+      // Handle direct hash navigation on page load
+      if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

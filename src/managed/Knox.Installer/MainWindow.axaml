@@ -1,0 +1,225 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Knox.Installer.MainWindow"
+        Title="Knox Studio Setup"
+        Width="740" Height="490"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="#F5F5F5">
+
+    <Border BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+        <Grid RowDefinitions="52,*">
+            <!-- 3. SIMSIYAH UST BAR -->
+            <Grid Grid.Row="0" Background="#000000" ColumnDefinitions="Auto,*,Auto" PointerPressed="OnTopBarPointerPressed">
+                <!-- 4. Sol ustte program logosu + 5. Beyaz renkte Knox Studio yazisi -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="10">
+                    <Image Width="24" Height="24" Source="avares://Knox.Installer/Assets/logo.png" VerticalAlignment="Center" />
+                    <TextBlock Text="Knox Studio" FontWeight="Bold" FontSize="16" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TxtHeaderSubtitle" Text="SETUP" FontSize="11" FontWeight="SemiBold" Foreground="#888888" VerticalAlignment="Center" Margin="8,0,0,0" LetterSpacing="1" />
+                </StackPanel>
+
+                <!-- 6. Sag ustte emojisiz dil secenegi + Pencere butonlari -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" Spacing="8">
+                    <!-- Emojisiz Dil Butonu (TR / EN) -->
+                    <Button x:Name="BtnLangToggle" Click="OnLangToggleClick" Height="28" Padding="10,0" Background="#1A1A1A" BorderBrush="#333333" BorderThickness="1" CornerRadius="14" Cursor="Hand">
+                        <TextBlock x:Name="TxtLangToggle" Text="TR / EN" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+                    </Button>
+                    <Button Click="OnMinimizeClick" Width="30" Height="30" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="1" CornerRadius="15" Cursor="Hand">
+                        <TextBlock Text="—" Foreground="#CCCCCC" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                    <Button Click="OnCloseClick" Width="30" Height="30" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="1" CornerRadius="15" Cursor="Hand">
+                        <TextBlock Text="✕" Foreground="#CCCCCC" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Mavi ayrım çizgisi (2px) -->
+                <Border Grid.ColumnSpan="3" Height="2" Background="#3D84E8" VerticalAlignment="Bottom" />
+            </Grid>
+
+            <!-- 1. WHITESMOKE MAIN CONTENT -->
+            <Grid Grid.Row="1" Background="#F5F5F5">
+
+                <!-- STEP 1: PROGRAM TANITIMI (Welcome / Overview) -->
+                <Grid x:Name="IntroPage" RowDefinitions="*,Auto" Margin="28,20,28,20">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,250" Margin="0,0,0,12">
+                        <!-- Sol Tanıtım Bölümü -->
+                        <StackPanel Grid.Column="0" Spacing="16" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="TxtIntroTitle" Text="Knox Studio v0.37.1" FontSize="24" FontWeight="Bold" Foreground="#1A1A1A" />
+                                <TextBlock x:Name="TxtIntroSubtitle" Text="Yeni Nesil Açık Kaynaklı Dijital Ses İşleme ve Müzik Üretim İstasyonu" FontSize="13" Foreground="#3D84E8" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- Özellikler Kartı -->
+                            <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="14,12">
+                                <StackPanel Spacing="8">
+                                    <TextBlock x:Name="TxtFeat1" Text="• 64-bit ultra düşük gecikmeli profesyonel ses motoru" FontSize="12.5" Foreground="#333333" />
+                                    <TextBlock x:Name="TxtFeat2" Text="• Kapsamlı MIDI editörü, sanal enstrüman ve efekt desteği" FontSize="12.5" Foreground="#333333" />
+                                    <TextBlock x:Name="TxtFeat3" Text="• Modern, donanım hızlandırmalı ve akıcı stüdyo arayüzü" FontSize="12.5" Foreground="#333333" />
+                                    <TextBlock x:Name="TxtFeat4" Text="• Tamamen ücretsiz ve açık kaynaklı (GNU AGPLv3)" FontSize="12.5" Foreground="#333333" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock x:Name="TxtIntroDesc" Text="Kuruluma devam etmek için İLERİ butonuna tıklayınız." FontSize="12" Foreground="#666666" />
+                        </StackPanel>
+
+                        <!-- Sağ Poster Kartı -->
+                        <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                            <Grid>
+                                <Image x:Name="HeroImage" Stretch="UniformToFill" Source="avares://Knox.Installer/Assets/hero_art.png" />
+                                <Border Background="#B01E1E1E" VerticalAlignment="Bottom" Padding="12,8">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="KNOX STUDIO" FontWeight="Bold" FontSize="13" Foreground="#3D84E8" />
+                                        <TextBlock Text="v0.37.1 • 64-bit Windows" FontSize="11" Foreground="#DCDCDC" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Alt Butonlar: Kırmızı İptal (Sol), İleri (Sağ) -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
+                        <Button Click="OnCancelClick" Content="İPTAL" x:Name="BtnIntroCancel" Height="36" Width="96"
+                                Background="#E03E3E" Foreground="#FFFFFF" BorderThickness="0"
+                                CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                        <Button Click="OnGoToLicenseClick" Content="İLERİ >" x:Name="BtnIntroNext" Grid.Column="2" Height="36" Padding="24,0"
+                                Background="#3D84E8" Foreground="#FFFFFF" BorderThickness="0"
+                                CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                    </Grid>
+                </Grid>
+
+                <!-- STEP 2: LİSANS BİLDİRGESİ (License Agreement) -->
+                <Grid x:Name="LicensePage" IsVisible="False" RowDefinitions="*,Auto" Margin="28,20,28,20">
+                    <StackPanel Grid.Row="0" Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="TxtLicenseTitle" Text="Lisans Sözleşmesi (GNU AGPLv3)" FontSize="20" FontWeight="Bold" Foreground="#1A1A1A" />
+                            <TextBlock x:Name="TxtLicenseSubtitle" Text="Lütfen kuruluma devam etmeden önce lisans bildirisini okuyunuz." FontSize="12.5" Foreground="#666666" />
+                        </StackPanel>
+
+                        <!-- Lisans Metin Kutusu -->
+                        <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Height="220" Padding="10">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="TxtLicenseContent" Text="GNU AFFERO GENERAL PUBLIC LICENSE..." FontSize="11" Foreground="#333333" TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </Border>
+
+                        <CheckBox x:Name="ChkAgreeLicense" Content="Lisans sözleşmesindeki şartları okudum ve kabul ediyorum." IsChecked="True" Foreground="#1A1A1A" FontSize="12.5" FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <!-- Alt Butonlar -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+                        <Button Click="OnCancelClick" Content="İPTAL" x:Name="BtnLicenseCancel" Height="36" Width="96"
+                                Background="#E03E3E" Foreground="#FFFFFF" BorderThickness="0"
+                                CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                            <Button Click="OnGoToIntroClick" Content="&lt; GERİ" x:Name="BtnLicenseBack" Height="36" Width="90"
+                                    Background="#EAEAEA" Foreground="#333333" BorderBrush="#CCCCCC" BorderThickness="1"
+                                    CornerRadius="18" FontWeight="SemiBold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                            <Button Click="OnGoToConfigClick" Content="İLERİ >" x:Name="BtnLicenseNext" Height="36" Padding="24,0"
+                                    Background="#3D84E8" Foreground="#FFFFFF" BorderThickness="0"
+                                    CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- STEP 3: KURULUM AYARLARI (Options & Path) -->
+                <Grid x:Name="ConfigPage" IsVisible="False" RowDefinitions="*,Auto" Margin="28,20,28,20">
+                    <StackPanel Grid.Row="0" Spacing="16" VerticalAlignment="Center">
+                        <StackPanel Spacing="3">
+                            <TextBlock x:Name="TxtConfigTitle" Text="Kurulum Seçenekleri" FontSize="20" FontWeight="Bold" Foreground="#1A1A1A" />
+                            <TextBlock x:Name="TxtConfigSubtitle" Text="Kurulum dizinini ve sistem entegrasyon ayarlarını belirleyin." FontSize="12.5" Foreground="#666666" />
+                        </StackPanel>
+
+                        <!-- Dizin Seçimi Kartı -->
+                        <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="14">
+                            <StackPanel Spacing="8">
+                                <TextBlock x:Name="TxtPathLabel" Text="Hedef Kurulum Dizini:" FontSize="12" FontWeight="Bold" Foreground="#3D84E8" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox x:Name="TxtInstallPath" Grid.Column="0" Height="34" CornerRadius="6,0,0,6"
+                                             Background="#F8F8F8" Foreground="#1A1A1A" BorderBrush="#CCCCCC"
+                                             VerticalContentAlignment="Center" Padding="10,0" />
+                                    <Button Click="OnBrowseClick" Content="Gözat..." x:Name="BtnBrowse" Grid.Column="1"
+                                             Height="34" CornerRadius="0,6,6,0" Background="#EEEEEE" Foreground="#1A1A1A"
+                                             BorderBrush="#CCCCCC" Padding="14,0" Cursor="Hand" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Entegrasyon Seçenekleri Kartı -->
+                        <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="14">
+                            <StackPanel Spacing="8">
+                                <CheckBox x:Name="ChkDesktop" Content="Masaüstü kısayolu oluştur" IsChecked="True" Foreground="#1A1A1A" FontSize="12.5" />
+                                <CheckBox x:Name="ChkStartMenu" Content="Başlat menüsü kısayolu oluştur" IsChecked="True" Foreground="#1A1A1A" FontSize="12.5" />
+                                <CheckBox x:Name="ChkAssociations" Content=".knox ve .knoxproj proje dosyalarını ilişkilendir" IsChecked="True" Foreground="#1A1A1A" FontSize="12.5" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Alt Butonlar -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0">
+                        <Button Click="OnCancelClick" Content="İPTAL" x:Name="BtnConfigCancel" Height="36" Width="96"
+                                Background="#E03E3E" Foreground="#FFFFFF" BorderThickness="0"
+                                CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                            <Button Click="OnGoToLicenseClick" Content="&lt; GERİ" x:Name="BtnConfigBack" Height="36" Width="90"
+                                    Background="#EAEAEA" Foreground="#333333" BorderBrush="#CCCCCC" BorderThickness="1"
+                                    CornerRadius="18" FontWeight="SemiBold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                            <Button Click="OnStartInstallClick" Content="KURULUMU BAŞLAT" x:Name="BtnStartInstall" Height="36" Padding="22,0"
+                                    Background="#3D84E8" Foreground="#FFFFFF" BorderThickness="0"
+                                    CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- STEP 4: YÜKLEME İLERLEMESİ (Installing / Progress) -->
+                <Grid x:Name="ProgressPage" IsVisible="False" RowDefinitions="*,Auto" Margin="28,24,28,20">
+                    <StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="20">
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock x:Name="TxtProgressTitle" Text="Knox Studio Yükleniyor..." FontSize="22" FontWeight="Bold" Foreground="#1A1A1A" HorizontalAlignment="Center" />
+                            <TextBlock x:Name="TxtStatus" Text="Dosyalar ayıklanıyor..." FontSize="13" Foreground="#666666" HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Modern İlerleme Çubuğu -->
+                        <Border Background="#E0E0E0" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="5" Height="12" Padding="1" Margin="20,10">
+                            <Border x:Name="ProgressBarFill" Background="#3D84E8" CornerRadius="4" HorizontalAlignment="Left" Width="0" Height="8" />
+                        </Border>
+
+                        <TextBlock x:Name="TxtPercent" Text="%0" FontSize="16" FontWeight="Bold" Foreground="#3D84E8" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Alt Durum Çubuğu -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Text="v0.37.1 [x64] • GNU AGPLv3 • Furkan Çentek (rootcf)" FontSize="11" Foreground="#888888" VerticalAlignment="Center" />
+                        <Border Grid.Column="2" Background="#3D84E8" CornerRadius="14" Height="28" Padding="16,0">
+                            <TextBlock x:Name="TxtInstallingBadge" Text="YÜKLENİYOR" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- STEP 5: KURULUM TAMAMLANDI (Finished) -->
+                <Grid x:Name="FinishPage" IsVisible="False" RowDefinitions="*,Auto" Margin="28,24,28,20">
+                    <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
+                        <Border Width="64" Height="64" CornerRadius="32" Background="#FFFFFF" BorderBrush="#44B058" BorderThickness="2.5" HorizontalAlignment="Center">
+                            <TextBlock Text="✓" FontSize="34" FontWeight="Bold" Foreground="#44B058" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock x:Name="TxtFinishTitle" Text="Kurulum Başarıyla Tamamlandı!" FontSize="22" FontWeight="Bold" Foreground="#1A1A1A" HorizontalAlignment="Center" />
+                            <TextBlock x:Name="TxtFinishDesc" Text="Knox Studio bilgisayarınıza başarıyla kuruldu." FontSize="13" Foreground="#666666" HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <CheckBox x:Name="ChkLaunch" Content="Knox Studio'yu şimdi başlat" IsChecked="True" Foreground="#1A1A1A" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    </StackPanel>
+
+                    <!-- Alt Bitiş Butonu -->
+                    <Grid Grid.Row="1" HorizontalAlignment="Right">
+                        <Button Click="OnFinishClick" Content="BİTİR" x:Name="BtnFinish" Height="36" Width="120"
+                                Background="#3D84E8" Foreground="#FFFFFF" BorderThickness="0"
+                                CornerRadius="18" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand" />
+                    </Grid>
+                </Grid>
+
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knox Studio — Open Source Digital Audio Workstation</title>
+  <meta name="description" content="A fast, 64-bit open source digital audio workstation built with native C++ and Avalonia. Free and open source under AGPL-3.0.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="nav-brand">
+        <img src="assets/logo.png" alt="Knox Studio Logo" class="brand-logo">
+        <span class="brand-name">Knox Studio</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#specs" class="nav-link">Specs</a>
+        <a href="https://github.com" target="_blank" rel="noopener" class="nav-link">GitHub</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#download" class="btn btn-primary">Download Free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-container">
+      <div class="hero-badge">Open Source DAW · AGPL-3.0</div>
+      <h1 class="hero-title">High-performance audio production.<br>Completely open source.</h1>
+      <p class="hero-subtitle">
+        Knox Studio is a fast, 64-bit digital audio workstation built with native C++ and Avalonia. 
+        Engineered for ultra-low latency, modular sound design, and complete creative freedom.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#download" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download for Windows</span>
+        </a>
+        <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-secondary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>Source Code</span>
+        </a>
+      </div>
+
+      <div class="hero-meta">
+        <span>v1.2.0</span>
+        <span>•</span>
+        <span>Windows 10/11 (x64)</span>
+        <span>•</span>
+        <span>No telemetry or sign-in required</span>
+      </div>
+
+      <!-- App Preview Mockup Window -->
+      <div class="app-preview-frame">
+        <div class="window-header">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="window-title">Knox Studio — Project Arrangement</span>
+        </div>
+        <div class="window-content">
+          <img src="assets/hero-app.png" alt="Knox Studio Screenshot" class="app-screenshot">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Built for precision & speed</h2>
+        <p class="section-subtitle">A modern audio workstation without bloat, subscriptions, or proprietary locks.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Native C++ Audio Engine</h3>
+          <p class="feature-desc">SIMD-optimized 64-bit DSP core delivering sub-millisecond roundtrip latency with ASIO and WASAPI Exclusive.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎛️</div>
+          <h3 class="feature-title">Intuitive Arrangement</h3>
+          <p class="feature-desc">Multi-track timeline, real-time audio warping, precision automation curves, and non-destructive editing.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3 class="feature-title">VST3 & CLAP Support</h3>
+          <p class="feature-desc">Host your favorite plugins with crash-isolated sandboxing and sample-accurate automation parameters.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 class="feature-title">100% Free & Open Source</h3>
+          <p class="feature-desc">Licensed under AGPL-3.0. No accounts, no subscriptions, no DRM, and zero telemetry.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Specs -->
+  <section class="specs-section" id="specs">
+    <div class="container">
+      <div class="specs-box">
+        <div class="spec-col">
+          <span class="spec-label">Audio Architecture</span>
+          <span class="spec-value">64-bit Floating Point DSP</span>
+        </div>
+        <div class="spec-col">
+          <span class="spec-label">Plugin Formats</span>
+          <span class="spec-value">VST3 / CLAP (Sandboxed)</span>
+        </div>
+        <div class="spec-col">
+          <span class="spec-label">Drivers Supported</span>
+          <span class="spec-value">ASIO, WASAPI, CoreAudio, ALSA</span>
+        </div>
+        <div class="spec-col">
+          <span class="spec-label">License</span>
+          <span class="spec-value">AGPL-3.0 (Open Source)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download CTA Section -->
+  <section class="download-section" id="download">
+    <div class="container download-container">
+      <h2 class="download-title">Start producing today.</h2>
+      <p class="download-subtitle">Download the installer or portable binary for Windows.</p>
+
+      <div class="download-cards">
+        <div class="download-card">
+          <div class="download-badge">Recommended</div>
+          <h3 class="card-name">Windows Installer</h3>
+          <p class="card-info">64-bit installer (.exe) for Windows 10 & 11</p>
+          <a href="#" class="btn btn-primary btn-block">Download .exe (64 MB)</a>
+        </div>
+
+        <div class="download-card">
+          <div class="download-badge muted">Portable</div>
+          <h3 class="card-name">Portable Zip</h3>
+          <p class="card-info">Stand-alone archive, extract and run directly</p>
+          <a href="#" class="btn btn-secondary btn-block">Download .zip (58 MB)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="Knox Studio Logo" class="footer-logo">
+        <span>Knox Studio · AGPL-3.0 License</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+        <a href="#">Releases</a>
+        <a href="#">Documentation</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

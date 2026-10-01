@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Knox.Installer.UninstallWindow"
+        Title="Knox Studio - Uninstaller"
+        Width="640" Height="380"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="#F5F5F5">
+
+    <Border BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+        <Grid RowDefinitions="52,*">
+            <!-- UST BAR -->
+            <Grid Grid.Row="0" Background="#000000" ColumnDefinitions="Auto,*,Auto" PointerPressed="OnTopBarPointerPressed">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="10">
+                    <Image Width="24" Height="24" Source="avares://Knox.Installer/Assets/logo.png" VerticalAlignment="Center" />
+                    <TextBlock Text="Knox Studio" FontWeight="Bold" FontSize="16" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                    <TextBlock Text="UNINSTALLER" FontSize="11" FontWeight="SemiBold" Foreground="#E53935" VerticalAlignment="Center" Margin="8,0,0,0" LetterSpacing="1" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" Spacing="8">
+                    <Button Click="OnCloseClick" Width="30" Height="30" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="1" CornerRadius="15" Cursor="Hand">
+                        <TextBlock Text="✕" Foreground="#CCCCCC" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+
+                <Border Grid.ColumnSpan="3" Height="2" Background="#E53935" VerticalAlignment="Bottom" />
+            </Grid>
+
+            <!-- MAIN CONTENT -->
+            <Grid Grid.Row="1" Background="#F5F5F5" Margin="28,20,28,20">
+
+                <!-- STEP 1: CONFIRMATION -->
+                <Grid x:Name="ConfirmPage" RowDefinitions="*,Auto">
+                    <StackPanel Grid.Row="0" Spacing="14" VerticalAlignment="Center">
+                        <TextBlock Text="Knox Studio'yu Kaldır" FontSize="20" FontWeight="Bold" Foreground="#1A1A1A" />
+                        <TextBlock Text="Knox Studio ve tüm bileşenleri bilgisayarınızdan kaldırılacak." FontSize="13" Foreground="#666666" TextWrapping="Wrap" />
+
+                        <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,6,0,0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Kaldırılacak Konum:" FontSize="11" FontWeight="Bold" Foreground="#888888" />
+                                <TextBlock x:Name="TxtUninstallPath" Text="C:\..." FontSize="12.5" Foreground="#333333" />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Devam etmek istiyor musunuz?" FontSize="12.5" FontWeight="SemiBold" Foreground="#333333" Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,16,0,0">
+                        <Button Click="OnCancelClick" Content="İPTAL" Height="38" Padding="20,0" Background="#E0E0E0" Foreground="#333333" FontWeight="Bold" FontSize="12" CornerRadius="6" Cursor="Hand" />
+                        <Button Grid.Column="2" Click="OnStartUninstallClick" Content="KNOX STUDIO'YU KALDIR" Height="38" Padding="24,0" Background="#E53935" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" CornerRadius="6" Cursor="Hand" />
+                    </Grid>
+                </Grid>
+
+                <!-- STEP 2: PROGRESS -->
+                <Grid x:Name="ProgressPage" RowDefinitions="*,Auto" IsVisible="False">
+                    <StackPanel Grid.Row="0" Spacing="16" VerticalAlignment="Center">
+                        <TextBlock Text="Knox Studio Kaldırılıyor..." FontSize="18" FontWeight="Bold" Foreground="#1A1A1A" />
+                        <TextBlock x:Name="TxtStatus" Text="Dosyalar siliniyor..." FontSize="13" Foreground="#666666" />
+
+                        <Border Background="#E0E0E0" Height="8" CornerRadius="4" ClipToBounds="True" Margin="0,8,0,0">
+                            <Border x:Name="ProgressBarFill" Background="#E53935" HorizontalAlignment="Left" Width="0" Height="8" CornerRadius="4" />
+                        </Border>
+
+                        <TextBlock x:Name="TxtPercent" Text="%0" FontSize="12" FontWeight="Bold" Foreground="#888888" HorizontalAlignment="Right" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- STEP 3: FINISH -->
+                <Grid x:Name="FinishPage" RowDefinitions="*,Auto" IsVisible="False">
+                    <StackPanel Grid.Row="0" Spacing="14" VerticalAlignment="Center">
+                        <TextBlock Text="Kaldırma Tamamlandı" FontSize="20" FontWeight="Bold" Foreground="#2E7D32" />
+                        <TextBlock Text="Knox Studio bilgisayarınızdan başarıyla kaldırıldı." FontSize="13" Foreground="#555555" />
+                    </StackPanel>
+
+                    <Button Grid.Row="1" Click="OnCloseClick" Content="KAPAT" HorizontalAlignment="Right" Height="38" Padding="28,0" Background="#2E7D32" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" CornerRadius="6" Cursor="Hand" Margin="0,16,0,0" />
+                </Grid>
+
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

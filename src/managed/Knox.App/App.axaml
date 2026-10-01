@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Knox.App.App"
+             Name="Knox"
+             RequestedThemeVariant="Dark">
+             <!-- Knox is dark-first -->
+
+    <!-- macOS application menu (the bold "Knox" menu). -->
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="Knox">
+                <NativeMenuItem.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="About Knox" Click="OnAppAbout"/>
+                        <NativeMenuItemSeparator/>
+                        <NativeMenuItem Header="Settings…" Click="OnAppPreferences" Gesture="Cmd+,"/>
+                    </NativeMenu>
+                </NativeMenuItem.Menu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Knox.App/Theme/KnoxTheme.axaml"/>
+    </Application.Styles>
+</Application>

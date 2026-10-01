@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026 Egor Khindikaynen (Nota). See LICENSES/ for license terms.
+
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Microsoft.Extensions.DependencyInjection;
+using Knox.Application;
+
+namespace Knox.App;
+
+public sealed class AboutWindow : KnoxWindow
+{
+    public AboutWindow()
+    {
+        var build = App.Services.GetRequiredService<EngineBuildInfo>();
+        Title = "About Knox";
+        Width = 380;
+        Height = 348;   // + title-bar band
+        CanResize = false;
+        Background = Brush("Brush.BgApp");
+
+        var panel = new StackPanel
+        {
+            Margin = new Thickness(28),
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Knox Studio", FontSize = 26, FontWeight = FontWeight.SemiBold,
+            Foreground = Brush("Brush.TextPrimary"),
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            Text = $"Version {AppInfo.Version}",
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            Text = $"Engine {build.Version}",
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            Text = "Desktop DAW · AGPLv3",
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            Margin = new Thickness(0, 8, 0, 0),
+            Text = "Furkan Çentek (rootcf)",
+            FontWeight = FontWeight.SemiBold,
+            Foreground = Brush("Brush.TextPrimary"),
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            Text = "Free and open-source software under the GNU AGPLv3.",
+        });
+        panel.Children.Add(new TextBlock
+        {
+            Classes = { "Caption" },
+            TextWrapping = TextWrapping.Wrap,
+            Text = "Includes third-party software (JUCE, Avalonia, miniaudio, RtMidi, "
+                 + "dr_libs, Signalsmith, HIIR). See LICENSES/THIRD-PARTY-NOTICES.md "
+                 + "for copyright and attribution notices.",
+        });
+        SetBody(panel);
+    }
+
+    private IBrush Brush(string key)
+        => this.TryFindResource(key, out var v) && v is IBrush b ? b : Brushes.Magenta;
+}

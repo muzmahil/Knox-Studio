@@ -1,0 +1,591 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:app="clr-namespace:Knox.App"
+        xmlns:vm="clr-namespace:Knox.Presentation;assembly=Knox.Presentation"
+        mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="600"
+        x:Class="Knox.App.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1200" Height="800" MinWidth="1100" MinHeight="680"
+        Background="{DynamicResource Brush.BgApp}"
+        Icon="/Assets/logo.png"
+        WindowState="Maximized"
+        UseLayoutRounding="True"
+        TextOptions.TextRenderingMode="Antialias"
+        RenderOptions.BitmapInterpolationMode="HighQuality"
+        RenderOptions.EdgeMode="Antialias"
+        FontFamily="{DynamicResource Font.UI}"
+        Title="">
+  <Window.Resources>
+    <app:ToolbarSideToAlignmentConverter x:Key="ToolbarSideToAlignment"/>
+  </Window.Resources>
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="File">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="New" Click="OnMenuNew" Gesture="Cmd+N"/>
+            <NativeMenuItem Header="Open…" Click="OnMenuOpen" Gesture="Cmd+O"/>
+            <NativeMenuItem Header="Save" Click="OnMenuSave" Gesture="Cmd+S"/>
+            <NativeMenuItem Header="Save As…" Click="OnMenuSaveAs" Gesture="Shift+Cmd+S"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Import audio…" Click="OnMenuImport" Gesture="Cmd+I"/>
+            <NativeMenuItem Header="Export audio…" Click="OnMenuExport" Gesture="Shift+Cmd+E"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Settings…" Click="OnPreferences" Gesture="Ctrl+,"/>
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Edit">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Undo" Click="OnMenuUndo" Gesture="Cmd+Z"/>
+            <NativeMenuItem Header="Redo" Click="OnMenuRedo" Gesture="Shift+Cmd+Z"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Duplicate clip" Click="OnMenuDuplicate" Gesture="Cmd+D"/>
+            <NativeMenuItem Header="Split at playhead" Click="OnMenuSplit" Gesture="Cmd+E"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Lock Envelopes" Click="OnToggleLockEnvelopes" ToggleType="CheckBox"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Cut" Click="OnMenuCut"/>
+            <NativeMenuItem Header="Copy" Click="OnMenuCopy"/>
+            <NativeMenuItem Header="Paste" Click="OnMenuPaste"/>
+            <NativeMenuItem Header="Delete" Click="OnMenuDeleteSel"/>
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="View">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Mixer" Click="OnMenuMixer" Gesture="Cmd+M"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Toggle browser" Click="OnMenuToggleBrowser"/>
+            <NativeMenuItem Header="Toggle detail panel" Click="OnMenuToggleClip"/>
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Transport">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Play / Stop" Click="OnMenuPlayStop"/>
+            <NativeMenuItem Header="Record" Click="OnMenuRecord"/>
+            <NativeMenuItem Header="Loop" Click="OnMenuLoop" Gesture="Cmd+L"/>
+            <NativeMenuItem Header="Metronome" Click="OnMenuMetronome" Gesture="Cmd+K"/>
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Help">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="What's New" Click="OnWhatsNew"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="About Knox" Click="OnAbout"/>
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+    </NativeMenu>
+  </NativeMenu.Menu>
+
+  <Panel>
+  <DockPanel>
+    <!-- TOP BAR (32px): Unified Window Title & Menu Bar (Deep Dark #141416) -->
+    <Border x:Name="TitleBar" DockPanel.Dock="Top" Height="32" Background="#141416"
+            BorderBrush="#252528" BorderThickness="0,0,0,1"
+            PointerPressed="OnTitleBarPressed">
+      <Panel>
+        <!-- Center: Perfectly Centered Document Project Title (e.g. 📄 Untitled - Tracks) -->
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+          <Viewbox Width="12" Height="12" VerticalAlignment="Center">
+            <Path Fill="#A0A0A4" Data="M3 1 C2.45 1 2 1.45 2 2 L2 14 C2 14.55 2.45 15 3 15 L11 15 C11.55 15 12 14.55 12 14 L12 5 L8 1 L3 1 Z M8 1.5 L11.5 5 L8 5 L8 1.5 Z"/>
+          </Viewbox>
+          <TextBlock x:Name="ProjectTitleText" Text="Untitled - Tracks"
+                     FontSize="12" FontWeight="Medium"
+                     Foreground="#D0D0D4"/>
+        </StackPanel>
+
+        <!-- Left: App Icon / Logo + Menus -->
+        <DockPanel LastChildFill="False">
+          <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+            <!-- App Logo Icon -->
+            <Image Source="/Assets/logo.png" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0" IsHitTestVisible="False"/>
+            <Menu VerticalAlignment="Center">
+              <!-- Knox App Menu -->
+              <MenuItem x:Name="MenuKnoxApp" Header="Knox" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF" Padding="6,2" Cursor="Hand">
+                <MenuItem Header="About Knox" Click="OnAbout"/>
+                <Separator/>
+                <MenuItem Header="Preferences…" Click="OnPreferences" InputGesture="Ctrl+OemComma"/>
+                <Separator/>
+                <MenuItem Header="Quit Knox" InputGesture="Ctrl+Q" Click="OnQuitClick"/>
+              </MenuItem>
+
+              <!-- File Menu -->
+              <MenuItem x:Name="MenuFile" Header="File" FontSize="12" Foreground="#E0E0E0" Padding="7,2">
+                <MenuItem x:Name="MenuNew" Header="New" Click="OnMenuNew" InputGesture="Ctrl+N"/>
+                <MenuItem x:Name="MenuOpen" Header="Open…" Click="OnMenuOpen" InputGesture="Ctrl+O"/>
+                <MenuItem x:Name="MenuSave" Header="Save" Click="OnMenuSave" InputGesture="Ctrl+S"/>
+                <MenuItem x:Name="MenuSaveAs" Header="Save As…" Click="OnMenuSaveAs" InputGesture="Shift+Ctrl+S"/>
+                <Separator/>
+                <MenuItem x:Name="MenuImport" Header="Import audio…" Click="OnMenuImport" InputGesture="Ctrl+I"/>
+                <MenuItem x:Name="MenuExport" Header="Export audio…" Click="OnMenuExport" InputGesture="Shift+Ctrl+E"/>
+                <Separator/>
+                <MenuItem x:Name="MenuSettings" Header="Preferences…" Click="OnPreferences" InputGesture="Ctrl+OemComma"/>
+              </MenuItem>
+
+              <!-- Edit Menu -->
+              <MenuItem x:Name="MenuEdit" Header="Edit" FontSize="12" Foreground="#E0E0E0" Padding="7,2">
+                <MenuItem x:Name="MenuUndo" Header="Undo" Click="OnMenuUndo" InputGesture="Ctrl+Z"/>
+                <MenuItem x:Name="MenuRedo" Header="Redo" Click="OnMenuRedo" InputGesture="Shift+Ctrl+Z"/>
+                <Separator/>
+                <MenuItem x:Name="MenuCut" Header="Cut" Click="OnMenuCut" InputGesture="Ctrl+X"/>
+                <MenuItem x:Name="MenuCopy" Header="Copy" Click="OnMenuCopy" InputGesture="Ctrl+C"/>
+                <MenuItem x:Name="MenuPaste" Header="Paste" Click="OnMenuPaste" InputGesture="Ctrl+V"/>
+                <MenuItem x:Name="MenuDeleteSel" Header="Delete" Click="OnMenuDeleteSel" InputGesture="Delete"/>
+                <Separator/>
+                <MenuItem x:Name="MenuDuplicate" Header="Duplicate clip" Click="OnMenuDuplicate" InputGesture="Ctrl+D"/>
+                <MenuItem x:Name="MenuSplit" Header="Split at playhead" Click="OnMenuSplit" InputGesture="Ctrl+E"/>
+                <Separator/>
+                <MenuItem x:Name="MenuLockEnvelopes" Header="Lock Envelopes" Click="OnToggleLockEnvelopes"/>
+              </MenuItem>
+
+              <!-- View Menu -->
+              <MenuItem x:Name="MenuView" Header="View" FontSize="12" Foreground="#E0E0E0" Padding="7,2">
+                <MenuItem x:Name="MenuMixer" Header="Mixer" Click="OnMenuMixer" InputGesture="Ctrl+M"/>
+                <Separator/>
+                <MenuItem x:Name="MenuToggleBrowser" Header="Toggle Library / Browser" Click="OnMenuToggleBrowser" InputGesture="Y"/>
+                <MenuItem x:Name="MenuToggleClip" Header="Toggle Detail Editor" Click="OnMenuToggleClip" InputGesture="E"/>
+              </MenuItem>
+
+              <!-- Window Menu -->
+              <MenuItem x:Name="MenuWindow" Header="Window" FontSize="12" Foreground="#E0E0E0" Padding="7,2">
+                <MenuItem Header="Minimize" Click="OnTrafficMinimizeClick" InputGesture="Ctrl+M"/>
+                <MenuItem Header="Zoom" Click="OnTrafficMaximizeClick"/>
+                <Separator/>
+                <MenuItem Header="Mixer Window" Click="OnMenuMixer"/>
+              </MenuItem>
+
+              <!-- Help Menu -->
+              <MenuItem x:Name="MenuHelp" Header="Help" FontSize="12" Foreground="#E0E0E0" Padding="7,2">
+                <MenuItem x:Name="MenuWhatsNew" Header="What's New in Knox" Click="OnWhatsNew"/>
+                <Separator/>
+                <MenuItem x:Name="MenuAbout" Header="About Knox" Click="OnAbout"/>
+              </MenuItem>
+            </Menu>
+          </StackPanel>
+        </DockPanel>
+      </Panel>
+    </Border>
+
+    <!-- Transport (50): Logic Pro Style Transport & Central LCD Display (seamless with Toolbar below) -->
+    <Border DockPanel.Dock="Top" Classes="Panel" Height="50" Padding="12,0" Background="{DynamicResource Brush.ChromeBg}"
+            BorderThickness="0">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <!-- Left: Transport buttons (Rewind, Stop, Play, Record, Count-in, Metronome, Follow, Loop) -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" HorizontalAlignment="Left">
+          <Button x:Name="RewindBtn" Classes="tp-icon" Content="|◀" ToolTip.Tip="Return to Zero (Return)"
+                  Foreground="{DynamicResource Brush.TextSecondary}" Click="OnRewindToZero"/>
+          <Button x:Name="StopBtn" Classes="tp-icon" Content="■" ToolTip.Tip="Stop (Space / Return)"
+                  Foreground="{DynamicResource Brush.TextSecondary}" Command="{Binding Transport.StopCommand}"/>
+          <Button x:Name="PlayBtn" Classes="tp-play" Content="▶" ToolTip.Tip="Play (Space)"
+                  Command="{Binding Transport.PlayCommand}"/>
+          <ToggleButton x:Name="RecordBtn" Classes="tp-icon" Content="●" ToolTip.Tip="Record (R)"
+                        Foreground="{DynamicResource Brush.Danger}" IsChecked="{Binding Transport.RecordOn}"/>
+
+          <Border Width="1" Height="22" Background="{DynamicResource Brush.BorderStrong}" Margin="3,0"/>
+
+          <!-- Typing Keyboard to Piano -->
+          <ToggleButton x:Name="TypingKeyboardToggle" Classes="tp-icon" IsChecked="False" Click="OnToggleTypingKeyboard"
+                        ToolTip.Tip="Typing Keyboard to Piano — Right-click for Octaves (1–5)">
+            <ToggleButton.ContextMenu>
+              <ContextMenu x:Name="TypingKeyboardMenu">
+                <MenuItem Header="Typing Keyboard Octave" IsEnabled="False" FontWeight="Bold"/>
+                <Separator/>
+                <MenuItem x:Name="Octave1Item" Header="   Octave 1 (C2)" Click="OnSelectOctave1"/>
+                <MenuItem x:Name="Octave2Item" Header="   Octave 2 (C3)" Click="OnSelectOctave2"/>
+                <MenuItem x:Name="Octave3Item" Header="✓ Octave 3 (C4) — Default" Click="OnSelectOctave3"/>
+                <MenuItem x:Name="Octave4Item" Header="   Octave 4 (C5)" Click="OnSelectOctave4"/>
+                <MenuItem x:Name="Octave5Item" Header="   Octave 5 (C6)" Click="OnSelectOctave5"/>
+                <Separator/>
+                <MenuItem Header="Octave Down (-)" Click="OnMenuOctaveDown"/>
+                <MenuItem Header="Octave Up (+)" Click="OnMenuOctaveUp"/>
+              </ContextMenu>
+            </ToggleButton.ContextMenu>
+            <Viewbox Width="15" Height="15">
+              <Canvas Width="24" Height="24">
+                <Path Fill="{Binding $parent[ToggleButton].Foreground}"
+                      Data="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 12H5c-.55 0-1-.45-1-1V8c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v8c0 .55-.45 1-1 1zM6 9h2v4H6zm3 0h2v4H9zm3 0h2v4h-2zm3 0h2v4h-2z"/>
+              </Canvas>
+            </Viewbox>
+          </ToggleButton>
+
+          <!-- Count-in "123" -->
+          <ToggleButton x:Name="CountInBtn" Classes="tp-icon" Click="OnToggleCountIn" IsChecked="True"
+                        ToolTip.Tip="Count-in (1,2,3,4) — Right-click for options (Record / Playback / Bars)">
+            <ToggleButton.ContextMenu>
+              <ContextMenu x:Name="CountInMenu">
+                <MenuItem x:Name="CountInHeaderItem" Header="Count-in Options" IsEnabled="False" FontWeight="Bold"/>
+                <Separator/>
+                <MenuItem x:Name="CountInRecordItem" Header="Count-in on Record" Click="OnToggleCountInRecord"/>
+                <MenuItem x:Name="CountInPlaybackItem" Header="Count-in on Playback" Click="OnToggleCountInPlayback"/>
+                <Separator/>
+                <MenuItem x:Name="CountIn1BarItem" Header="1 Bar (4 Beats)" Click="OnSelectCountIn1Bar"/>
+                <MenuItem x:Name="CountIn2BarsItem" Header="2 Bars (8 Beats)" Click="OnSelectCountIn2Bars"/>
+              </ContextMenu>
+            </ToggleButton.ContextMenu>
+            <TextBlock x:Name="CountInBtnText" Text="123" FontSize="11" FontWeight="Bold"
+                       Foreground="{Binding $parent[ToggleButton].Foreground}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </ToggleButton>
+
+          <!-- Metronome (Logic Purple) -->
+          <ToggleButton x:Name="MetroBtn" Classes="tp-icon" IsChecked="{Binding Transport.MetronomeOn}" ToolTip.Tip="Metronome (M)">
+            <Viewbox Width="15" Height="15">
+              <Canvas Width="24" Height="24">
+                <Path Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.7"
+                      StrokeJoin="Round" Data="M12 3 L18.5 20 L5.5 20 Z"/>
+                <Path Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.7"
+                      StrokeLineCap="Round" Data="M12 20 L14.5 8"/>
+                <Ellipse Canvas.Left="13" Canvas.Top="6.5" Width="3" Height="3"
+                         Fill="{Binding $parent[ToggleButton].Foreground}"/>
+              </Canvas>
+            </Viewbox>
+          </ToggleButton>
+
+          <!-- Follow playhead (3 modes: Page Jump, Continuous Left, Continuous Center) -->
+          <ToggleButton x:Name="FollowBtn" Classes="tp-icon" Click="OnToggleFollow" ToolTip.Tip="Follow playhead (Right-click to change mode)">
+            <ToggleButton.ContextMenu>
+              <ContextMenu>
+                <MenuItem x:Name="FollowModePagedItem" Header="Page Jump" Click="OnSelectFollowModePaged" />
+                <MenuItem x:Name="FollowModeLeftItem" Header="Continuous from Start" Click="OnSelectFollowModeLeft" />
+                <MenuItem x:Name="FollowModeCenterItem" Header="Continuous Centered" Click="OnSelectFollowModeCenter" />
+              </ContextMenu>
+            </ToggleButton.ContextMenu>
+            <Viewbox Width="15" Height="15">
+              <Canvas Width="24" Height="24">
+                <Path Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.8"
+                      StrokeLineCap="Round" Data="M3 18 H21"/>
+                <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M8 6 H16 L12 12 Z"/>
+                <Path Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.8"
+                      StrokeLineCap="Round" Data="M12 12 V18"/>
+              </Canvas>
+            </Viewbox>
+          </ToggleButton>
+
+          <!-- Loop (Logic Purple) + range readout -->
+          <ToggleButton x:Name="LoopBtn" Classes="chip" IsChecked="{Binding Transport.LoopOn}" ToolTip.Tip="Cycle / Loop (Cmd+L)">
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Viewbox Width="14" Height="14">
+                <Canvas Width="24" Height="24">
+                  <Path Fill="{Binding $parent[ToggleButton].Foreground}"
+                        Data="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+                </Canvas>
+              </Viewbox>
+              <TextBlock Text="{Binding Transport.LoopRangeText}" FontSize="11" FontWeight="Medium"
+                         Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </ToggleButton>
+        </StackPanel>
+
+        <!-- Center: Digital Hardware OLED / LCD Studio Display (3-Section Hardware Display) -->
+        <Border x:Name="LcdScreen" Grid.Column="1" Classes="lcd" HorizontalAlignment="Center" Margin="8,0"
+                BoxShadow="0 2 12 0 #70000000"
+                PointerPressed="OnLcdPointerPressed"
+                ToolTip.Tip="Studio LCD Display (Right-click for Color Themes &amp; Options)">
+          <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <!-- Section 1: Position / SMPTE & Musical Time -->
+            <Border x:Name="LcdPositionCell" Classes="lcd-cell" Width="144" Cursor="Hand" PointerPressed="OnTogglePositionDisplay"
+                    ToolTip.Tip="Playhead Position (Top: SMPTE Timecode / Bottom: Bar.Beat.Div.Tick)">
+              <StackPanel Spacing="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="2,1">
+                <!-- SMPTE Timecode: 01:00:12:16.58 -->
+                <TextBlock x:Name="LcdSmpteText" Text="01:00:00:00.00" Width="140"
+                           FontSize="13" FontWeight="Normal" FontFamily="{DynamicResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.LcdPrimary}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                <!-- Musical Position: 0008  3  2  151 (with ghost leading zeros) -->
+                <TextBlock x:Name="LcdMusicalPosText" Width="140"
+                           FontSize="13" FontWeight="Normal" FontFamily="{DynamicResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.LcdPrimary}" HorizontalAlignment="Center" TextAlignment="Center"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Divider 1 -->
+            <Border Width="1" Height="30" Background="{DynamicResource Brush.LcdBorder}" Margin="3,0"/>
+
+            <!-- Section 2: Locators / Loop In & Out Range -->
+            <Border x:Name="LcdLocatorsCell" Classes="lcd-cell" Width="134" Cursor="Hand" PointerPressed="OnLocatorsClicked"
+                    ToolTip.Tip="Loop Locators (Top: Start / Bottom: End)">
+              <StackPanel Spacing="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="2,1">
+                <!-- Loop Start Locator: 0004  1  1  001 -->
+                <TextBlock x:Name="LcdLoopStartText" Width="130"
+                           FontSize="13" FontWeight="Normal" FontFamily="{DynamicResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.LcdPrimary}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                <!-- Loop End Locator: 0021  1  1  001 -->
+                <TextBlock x:Name="LcdLoopEndText" Width="130"
+                           FontSize="13" FontWeight="Normal" FontFamily="{DynamicResource Font.Mono}"
+                           Foreground="{DynamicResource Brush.LcdPrimary}" HorizontalAlignment="Center" TextAlignment="Center"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Divider 2 -->
+            <Border Width="1" Height="30" Background="{DynamicResource Brush.LcdBorder}" Margin="3,0"/>
+
+            <!-- Section 3: Tempo / BPM & Mode -->
+            <Border x:Name="LcdTempoSectionCell" Classes="lcd-cell" Width="114"
+                    ToolTip.Tip="Tempo &amp; Mode (Drag BPM to adjust, click Mode for options)">
+              <StackPanel Spacing="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="2,1">
+                <!-- BPM Row: Drag/Typeable 144,0000 -->
+                <Panel x:Name="BpmHost" Height="18" Width="98" HorizontalAlignment="Center"/>
+                <!-- Mode Row: Keep Tempo ⌵ -->
+                <Button x:Name="LcdModeBtn" Classes="ghost" Padding="0" Height="15" Click="OnLcdModeClicked"
+                        HorizontalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+                    <TextBlock x:Name="LcdModeText" Text="Keep Tempo" FontSize="10" FontWeight="Normal"
+                               Foreground="{DynamicResource Brush.LcdSecondary}" VerticalAlignment="Center"/>
+                    <TextBlock Text="⌵" FontSize="9" Foreground="{DynamicResource Brush.LcdSecondary}" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <!-- Right (pinned): Mixer toggle + MIDI-learn toggle + CPU/Latency + master volume + stereo meter -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <ToggleButton x:Name="MixerTopBtn" Classes="top-btn" Content="Mixer" Click="OnToggleMixerTop" ToolTip.Tip="Toggle Mixer console (Cmd+M)"/>
+          <ToggleButton x:Name="MidiLearnBtn" Classes="top-btn" Content="MIDI" VerticalAlignment="Center"
+                        Click="OnToggleMidiLearn"
+                        ToolTip.Tip="MIDI Learn — highlight mappable controls, click one, then move a knob on your controller"/>
+          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <TextBlock x:Name="DspLabel" Classes="SectionLabel" Text="DSP" VerticalAlignment="Center"/>
+            <Border Width="42" Height="5" Background="{DynamicResource Brush.BgSunken}" CornerRadius="2" VerticalAlignment="Center" ClipToBounds="True">
+              <Border x:Name="CpuFill" Width="0" HorizontalAlignment="Left" CornerRadius="2"
+                      Background="{DynamicResource Brush.Success}"/>
+            </Border>
+            <TextBlock x:Name="CpuText" Text="0%" FontSize="10" FontWeight="Medium"
+                       Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" MinWidth="24"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock x:Name="MasterLabel" Classes="SectionLabel" Text="MASTER" VerticalAlignment="Center"/>
+            <Panel x:Name="MasterVolHost" Width="32" Height="32" VerticalAlignment="Center"/>
+            <Panel x:Name="MasterMeterHost" Width="80" Height="10" VerticalAlignment="Center"/>
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Toolbar (34): view switch + track adds | right: snap / automation / follow -->
+    <Border DockPanel.Dock="Top" Classes="Panel" Height="34" Padding="12,0"
+            Background="{DynamicResource Brush.ChromeBg}"
+            BorderBrush="{DynamicResource Brush.BorderDefault}" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Border Classes="segmented">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+              <Button x:Name="UndoBtn" Classes="seg" Click="OnMenuUndo" ToolTip.Tip="Undo (Cmd+Z)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[Button].Foreground}" Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.98 5.12-1.98 3.77 0 6.9 2.61 7.7 6.13l2.43-.8C21.43 11.23 17.36 8 12.5 8z"/>
+                  </Canvas>
+                </Viewbox>
+              </Button>
+              <Button x:Name="RedoBtn" Classes="seg" Click="OnMenuRedo" ToolTip.Tip="Redo (Shift+Cmd+Z)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[Button].Foreground}" Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.86 0-8.93 3.23-10.13 7.71l2.43.8c.8-3.52 3.93-6.13 7.7-6.13 1.96 0 3.73.78 5.12 1.98L13 16h9V7l-3.6 3.6z"/>
+                  </Canvas>
+                </Viewbox>
+              </Button>
+            </StackPanel>
+          </Border>
+          <Border Classes="segmented">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+              <ToggleButton x:Name="ToolPointerBtn" Classes="seg" IsChecked="True" ToolTip.Tip="Pointer / Selection Tool (1)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M3 3l7 18 3-7 7-3L3 3z"/>
+                  </Canvas>
+                </Viewbox>
+              </ToggleButton>
+              <ToggleButton x:Name="ToolPencilBtn" Classes="seg" ToolTip.Tip="Pencil / Draw Tool (2)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </Canvas>
+                </Viewbox>
+              </ToggleButton>
+              <ToggleButton x:Name="ToolCutBtn" Classes="seg" ToolTip.Tip="Scissors / Split Tool (3)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3h-3z"/>
+                  </Canvas>
+                </Viewbox>
+              </ToggleButton>
+              <ToggleButton x:Name="ToolEraserBtn" Classes="seg" ToolTip.Tip="Eraser / Delete Tool (4)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M15.14 3c-.42 0-.85.16-1.17.48L3.48 14c-.65.65-.65 1.7 0 2.35l3.17 3.17H19c.55 0 1-.45 1-1v-2H10.41l8.07-8.07c.65-.65.65-1.7 0-2.35l-2.17-2.17c-.32-.32-.75-.48-1.17-.48z"/>
+                  </Canvas>
+                </Viewbox>
+              </ToggleButton>
+              <ToggleButton x:Name="ToolStretchBtn" Classes="seg" ToolTip.Tip="Stretch / Time-Warp Tool (5)">
+                <Viewbox Width="12" Height="12">
+                  <Canvas Width="24" Height="24">
+                    <Path Fill="{Binding $parent[ToggleButton].Foreground}" Data="M4 4h2v16H4V4zm14 0h2v16h-2V4zm-7 7.5L8.5 9 5 12l3.5 3 2.5-2.5v-1zm2 1l2.5 2.5 3.5-3-3.5-3-2.5 2.5v1z"/>
+                  </Canvas>
+                </Viewbox>
+              </ToggleButton>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button x:Name="SnapChip" Classes="chip" Click="OnCycleSnap" ToolTip.Tip="Clip snap grid">
+            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <TextBlock x:Name="SnapChipText" Text="Snap" VerticalAlignment="Center"/>
+              <TextBlock x:Name="SnapLabel" Classes="Mono" Text="1/4" FontSize="10"
+                         Foreground="{DynamicResource Brush.AccentBright}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Border Classes="segmented">
+            <ToggleButton x:Name="AutomationToggle" Classes="seg" Content="Automation"
+                          Click="OnToggleAutomation" ToolTip.Tip="Show parameter-automation lanes"/>
+          </Border>
+          <!-- Automation record mode (M9-C): Read / Touch / Latch / Write.
+               Only shown while automation editing is active. -->
+          <Border x:Name="AutoModeBar" Classes="segmented" IsVisible="False" ToolTip.Tip="Automation record mode">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+              <ToggleButton x:Name="AutoModeRead" Classes="seg" Content="Read" IsChecked="True" Click="OnAutoModeRead"/>
+              <ToggleButton x:Name="AutoModeTouch" Classes="seg" Content="Touch" Click="OnAutoModeTouch"/>
+              <ToggleButton x:Name="AutoModeLatch" Classes="seg" Content="Latch" Click="OnAutoModeLatch"/>
+              <ToggleButton x:Name="AutoModeWrite" Classes="seg" Content="Write" Click="OnAutoModeWrite"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Status bar (22) -->
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource Brush.ChromeBg}"
+            BorderBrush="{DynamicResource Brush.BorderDefault}" BorderThickness="0,1,0,0"
+            Height="22" Padding="12,0">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Classes="Caption" VerticalAlignment="Center" Text="{Binding StatusText}"/>
+        <!-- Background-operation strip: label + thin bar, shown only while a background op runs. -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                    VerticalAlignment="Center" Margin="0,0,14,0"
+                    IsVisible="{Binding BackgroundBusy}">
+          <TextBlock Classes="Caption" VerticalAlignment="Center" Text="{Binding BackgroundLabel}"/>
+          <ProgressBar Width="120" Height="4" VerticalAlignment="Center"
+                       Minimum="0" Maximum="100"
+                       Value="{Binding BackgroundProgress}"
+                       IsIndeterminate="{Binding BackgroundIndeterminate}"
+                       Foreground="{DynamicResource Brush.Accent}"
+                       Background="{DynamicResource Brush.BorderDefault}"/>
+        </StackPanel>
+        <TextBlock Grid.Column="2" Classes="Caption Mono"
+                   VerticalAlignment="Center" Text="{Binding EngineInfo}"/>
+      </Grid>
+    </Border>
+
+    <!-- Main area (fills) over a resizable bottom Detail panel, split by a
+         draggable horizontal GridSplitter. -->
+    <Grid x:Name="BodyGrid">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" MinHeight="120"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="0"/>
+      </Grid.RowDefinitions>
+
+      <!-- Left browser (240) + main area (fills) -->
+      <Grid x:Name="BrowserGrid" Grid.Row="0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="240" MinWidth="160" MaxWidth="480"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <app:BrowserView x:Name="Browser" Grid.Column="0"/>
+        <GridSplitter x:Name="BrowserSplitter" Grid.Column="1" Width="3" Background="{DynamicResource Brush.BorderDefault}"
+                      ResizeDirection="Columns"/>
+        <Panel x:Name="MainContent" Grid.Column="2">
+          <app:ArrangementView x:Name="Timeline"/>
+        </Panel>
+      </Grid>
+
+      <!-- Drag handle to resize the Detail panel (only shown when it is open). -->
+      <GridSplitter x:Name="DetailSplitter"
+                    Grid.Row="1"
+                    Height="3"
+                    IsVisible="False"
+                    HorizontalAlignment="Stretch" ResizeDirection="Rows"
+                    Background="{DynamicResource Brush.BorderDefault}"/>
+
+      <!-- Detail panel: Devices chain / Clip (piano roll) / Mixer for the selected track -->
+      <Border x:Name="DetailPanel" Grid.Row="2" Classes="Panel"
+              IsVisible="False" Background="{DynamicResource Brush.BgApp}">
+        <DockPanel>
+          <!-- Header (1d/1e): mode tabs · track chip (routing/PDC) · Freeze · close -->
+          <Grid DockPanel.Dock="Top" Height="34" Margin="12,0" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+            <Border Classes="segmented" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="2">
+                <ToggleButton x:Name="DetailMixerBtn" Classes="seg" Content="Mixer" Click="OnDetailMixer"/>
+                <ToggleButton x:Name="DetailDevicesBtn" Classes="seg" Content="Devices" Click="OnDetailDevices"/>
+                <ToggleButton x:Name="DetailClipBtn" Classes="seg" Content="Clip" IsEnabled="False"
+                              ToolTip.Tip="Select a clip to edit" Click="OnDetailClip"/>
+              </StackPanel>
+            </Border>
+            <ContentControl x:Name="DetailChipHost" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+              <Button x:Name="FreezeBtn" Classes="ghost" Height="24" Padding="8,0" VerticalAlignment="Center"
+                      Click="OnFreezeClick"
+                      ToolTip.Tip="Freeze track — bounce it to audio to free up CPU (right-click for Flatten)">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Name="FreezeIcon" Text="❄" FontSize="12" VerticalAlignment="Center"
+                             Foreground="{DynamicResource Brush.TextSecondary}"/>
+                  <TextBlock x:Name="FreezeLabel" Text="Freeze" FontSize="11" VerticalAlignment="Center"
+                             Foreground="{DynamicResource Brush.TextSecondary}"/>
+                </StackPanel>
+              </Button>
+              <Button x:Name="LiveFreezeBtn" Classes="ghost" Height="24" Padding="8,0" VerticalAlignment="Center"
+                      IsVisible="False" Click="OnLiveFreezeClick"
+                      ToolTip.Tip="Live Freeze — bounce to a linked audio track below and sleep the source (Edit later to change it)">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <Path Width="14" Height="14" Stretch="None" StrokeThickness="1.4"
+                        Stroke="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center"
+                        Data="{x:Static app:NotaIcons.ChainLink}"/>
+                  <TextBlock x:Name="LiveFreezeLabel" Text="Live Freeze" FontSize="11" VerticalAlignment="Center"
+                             Foreground="{DynamicResource Brush.TextSecondary}"/>
+                </StackPanel>
+              </Button>
+              <Button x:Name="EditBtn" Classes="ghost" Height="24" Padding="8,0" VerticalAlignment="Center"
+                      IsVisible="False" Click="OnEditClick"
+                      ToolTip.Tip="Edit the frozen source — wakes it so you can change notes/devices (right-click: Unfreeze / Flatten)">
+                <TextBlock x:Name="EditBtnText" Text="Edit" FontSize="11" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush.AccentBright}"/>
+              </Button>
+              <Button x:Name="DoneBtn" Classes="ghost" Height="24" Padding="8,0" VerticalAlignment="Center"
+                      IsVisible="False" Click="OnDoneClick"
+                      ToolTip.Tip="Done — re-freeze the source and put it back to sleep">
+                <TextBlock x:Name="DoneBtnText" Text="Done" FontSize="11" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush.AccentBright}"/>
+              </Button>
+              <Button x:Name="DiscardBtn" Classes="ghost" Height="24" Padding="6,0" VerticalAlignment="Center"
+                      IsVisible="False" Click="OnDiscardClick"
+                      ToolTip.Tip="Discard — leave edit mode without re-freezing">
+                <TextBlock Text="✗" FontSize="12" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush.TextTertiary}"/>
+              </Button>
+            </StackPanel>
+            <Button x:Name="DetailPopOut" Grid.Column="3" Content="⧉" Classes="ghost" FontSize="14" Margin="8,0,0,0"
+                    Foreground="{DynamicResource Brush.TextTertiary}" Click="OnToggleDetailWindow"
+                    ToolTip.Tip="Open Devices + Clip in a separate window"/>
+            <Button x:Name="DetailClose" Grid.Column="4" Content="✕" Classes="ghost" FontSize="12" Margin="4,0,0,0"
+                    Foreground="{DynamicResource Brush.TextTertiary}" Click="OnCloseDetail"/>
+          </Grid>
+          <ContentControl x:Name="DetailBody"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </DockPanel>
+    <!-- MIDI-learn glass: highlights mappable controls + captures the learn click. -->
+    <app:MidiLearnOverlay x:Name="LearnOverlay" IsHitTestVisible="False"/>
+  </Panel>
+</Window>

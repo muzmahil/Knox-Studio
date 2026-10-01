@@ -1,0 +1,43 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Copy the right native engine for the build host: knox_engine.dll on Windows,
+       libknox_engine.dylib on macOS, libknox_engine.so on Linux. -->
+  <PropertyGroup>
+    <KnoxNativeDir Condition="'$(KnoxNativeDir)' == ''">$(MSBuildProjectDirectory)/../../src/native/knox.engine/build</KnoxNativeDir>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and '$(KnoxEngineDylib)' != ''">$(KnoxEngineDylib)</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and Exists('$(KnoxNativeDir)/Release/knox_engine.dll')">$(KnoxNativeDir)/Release/knox_engine.dll</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and Exists('$(KnoxNativeDir)/Debug/knox_engine.dll')">$(KnoxNativeDir)/Debug/knox_engine.dll</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">$(KnoxNativeDir)/knox_engine.dll</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">$(KnoxNativeDir)/libknox_engine.so</KnoxEngineLib>
+    <KnoxEngineLib Condition="'$(KnoxEngineLib)' == ''">$(KnoxNativeDir)/libknox_engine.dylib</KnoxEngineLib>
+    <KnoxEngineLibName Condition="$([MSBuild]::IsOSPlatform('Windows'))">knox_engine.dll</KnoxEngineLibName>
+    <KnoxEngineLibName Condition="'$(KnoxEngineLibName)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">libknox_engine.so</KnoxEngineLibName>
+    <KnoxEngineLibName Condition="'$(KnoxEngineLibName)' == ''">libknox_engine.dylib</KnoxEngineLibName>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(KnoxEngineLib)')">
+    <None Include="$(KnoxEngineLib)">
+      <Link>$(KnoxEngineLibName)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\managed\Knox.Infrastructure\Knox.Infrastructure.csproj" />
+    <!-- Referenced only so the arch-boundary check can reflect on the Presentation
+         assembly (Phase 0.7); Presentation is not in Infrastructure's closure. -->
+    <ProjectReference Include="..\..\src\managed\Knox.Presentation\Knox.Presentation.csproj" />
+  </ItemGroup>
+
+  <!-- Engine contract types + ports live in the Application namespace. -->
+  <ItemGroup>
+    <Using Include="Knox.Application" />
+  </ItemGroup>
+
+</Project>
